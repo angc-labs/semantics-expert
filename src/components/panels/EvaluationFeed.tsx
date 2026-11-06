@@ -3,6 +3,33 @@
 import React from "react";
 import StatusIndicator from "@/components/StatusIndicator";
 import { useSemanticsStore } from "@/store/useSemanticsStore";
+import type { Explicacion } from "@/lib/logica/semantica";
+
+// un paso de la explicacion con sus pasos hijos anidados
+// las comprobaciones completas quedan plegadas hasta que se abren
+function PasoExplicacion({ paso }: { paso: Explicacion }) {
+  const color = paso.valor ? "text-emerald-700" : "text-rose-600";
+  const cabecera = (
+    <span>
+      <span className="font-mono text-neutral-800">{paso.formula}</span>{" "}
+      <span className={`font-semibold ${color}`}>{paso.valor ? "V" : "F"}</span>
+      <span className="text-neutral-500"> · {paso.razon}</span>
+    </span>
+  );
+
+  if (paso.hijos.length === 0) return <div className="py-0.5">{cabecera}</div>;
+
+  return (
+    <details open={paso.justificacion !== "completa"} className="py-0.5">
+      <summary className="cursor-pointer">{cabecera}</summary>
+      <div className="ml-4 border-l border-neutral-200 pl-3">
+        {paso.hijos.map((h, i) => (
+          <PasoExplicacion key={i} paso={h} />
+        ))}
+      </div>
+    </details>
+  );
+}
 
 // lista de formulas que se han evaluado, se expande como un chat
 export default function EvaluationFeed() {
@@ -31,6 +58,20 @@ export default function EvaluationFeed() {
               pulsando={item.statusState === "cargando"}
             />
           </div>
+          {item.resultado?.ok === false && (
+            <ul className="text-xs text-rose-600 space-y-0.5 list-disc pl-5">
+              {item.resultado.errores.map((e, i) => (
+                <li key={i}>
+                  <span className="font-semibold">{e.tipo}:</span> {e.mensaje}
+                </li>
+              ))}
+            </ul>
+          )}
+          {item.resultado?.ok && (
+            <div className="text-xs">
+              <PasoExplicacion paso={item.resultado.explicacion} />
+            </div>
+          )}
         </div>
       ))}
     </div>

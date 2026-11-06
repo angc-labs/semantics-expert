@@ -11,12 +11,14 @@ import FormulaInputBar from "@/components/panels/FormulaInputBar";
 import EvaluationFeed from "@/components/panels/EvaluationFeed";
 import ValidationAlerts from "@/components/panels/ValidationAlerts";
 import { useSemanticsStore } from "@/store/useSemanticsStore";
+import { EJEMPLOS } from "@/lib/logica/ejemplos";
 
 export default function HomePage() {
   const activeMode = useSemanticsStore((s) => s.activeMode);
   const logs = useSemanticsStore((s) => s.logs);
   const evaluationHistory = useSemanticsStore((s) => s.evaluationHistory);
   const clearEvaluations = useSemanticsStore((s) => s.clearEvaluations);
+  const loadExample = useSemanticsStore((s) => s.loadExample);
 
   const hasEvaluations = evaluationHistory.length > 0;
 
@@ -47,6 +49,22 @@ export default function HomePage() {
           </div>
 
           <DefinitionChips />
+
+          {/* ejemplos de las presentaciones del curso */}
+          <div className="flex flex-wrap items-center gap-2 px-1 text-[11px] text-neutral-400">
+            <span>ejemplos:</span>
+            {EJEMPLOS.map((ej) => (
+              <button
+                key={ej.id}
+                type="button"
+                title={ej.fuente}
+                onClick={() => loadExample(ej.id)}
+                className="rounded-full border border-neutral-200 px-2.5 py-1 text-neutral-500 hover:border-neutral-900 hover:text-neutral-900 transition-colors cursor-pointer"
+              >
+                {ej.titulo}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* historial de formulas evaluadas */}
