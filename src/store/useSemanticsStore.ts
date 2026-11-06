@@ -3,6 +3,8 @@
 import { create } from "zustand";
 import type { FunctionDef, RelationDef } from "@/lib/logica/tipos";
 import { ajustarAlDominio } from "@/lib/logica/interpretacion";
+import { evaluar, type ResultadoEvaluacion } from "@/lib/logica/evaluador";
+import { buscarEjemplo } from "@/lib/logica/ejemplos";
 import type { EstadoPunto } from "@/components/StatusIndicator";
 
 export type ActiveMode = null | "dominio" | "funcion" | "relacion" | "entorno" | "formula";
@@ -13,6 +15,29 @@ export interface EvaluationItem {
   timestamp: string;
   statusLabel?: string;
   statusState?: EstadoPunto;
+  // resultado completo de la logica: valor y explicacion, o errores
+  resultado?: ResultadoEvaluacion;
+}
+
+// para que sirve: evaluar una formula y dejarla lista para el historial
+// una entrada con errores queda marcada como error y no recibe valor de verdad
+function crearEvaluacion(
+  texto: string,
+  state: Pick<SemanticsStore, "domain" | "functions" | "relations" | "environment">
+): EvaluationItem {
+  const resultado = evaluar(
+    texto,
+    { dominio: state.domain, funciones: state.functions, relaciones: state.relations },
+    state.environment
+  );
+  return {
+    id: `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    formula: texto,
+    timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+    resultado,
+    statusLabel: resultado.ok ? resultado.etiqueta : `${resultado.errores.length} error(es), sin valor de verdad`,
+    statusState: resultado.ok ? (resultado.valor ? "exito" : "neutro") : "error",
+  };
 }
 
 interface SemanticsStore {
@@ -44,6 +69,11 @@ interface SemanticsStore {
   saveEnvironmentDraft: (env: Record<string, string>) => void;
   deleteEnvironmentVar: (varName: string) => void;
   setFormula: (formula: string) => void;
+
+  // evalua una formula con la interpretacion actual y la agrega al historial
+  evaluateFormula: (texto: string) => void;
+  // reemplaza la interpretacion por un ejemplo de las presentaciones y evalua sus formulas
+  loadExample: (id: string) => void;
 
   // acciones para evaluaciones y registros
   addLog: (text: string) => void;
@@ -186,6 +216,34 @@ export const useSemanticsStore = create<SemanticsStore>((set) => ({
     }),
 
   setFormula: (formula) => set({ formula }),
+
+  evaluateFormula: (texto) =>
+    set((state) => ({
+      formula: texto,
+      evaluationHistory: [...state.evaluationHistory, crearEvaluacion(texto, state)],
+      logs: [...state.logs, `evaluar formula: ${texto}`],
+    })),
+
+  loadExample: (id) =>
+    set(() => {
+      const ejemplo = buscarEjemplo(id);
+      if (!ejemplo) return {};
+      const { interpretacion: interp, entorno, formulas } = ejemplo;
+      const base = {
+        domain: interp.dominio,
+        functions: interp.funciones,
+        relations: interp.relaciones,
+        environment: entorno,
+      };
+      return {
+        ...base,
+        formula: formulas[0],
+        evaluationHistory: formulas.map((f) => crearEvaluacion(f, base)),
+        logs: [`ejemplo cargado: ${ejemplo.titulo} (${ejemplo.fuente})`],
+        activeMode: null,
+        editingName: null,
+      };
+    }),
 
   addLog: (text) => set((state) => ({ logs: [...state.logs, text] })),
 

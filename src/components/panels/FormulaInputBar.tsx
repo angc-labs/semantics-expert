@@ -197,10 +197,7 @@ export default function FormulaInputBar() {
 
   const enterMode = useSemanticsStore((s) => s.enterMode);
   const closeMode = useSemanticsStore((s) => s.closeMode);
-  const setFormula = useSemanticsStore((s) => s.setFormula);
-  const addLog = useSemanticsStore((s) => s.addLog);
-  const addEvaluation = useSemanticsStore((s) => s.addEvaluation);
-  const updateEvaluation = useSemanticsStore((s) => s.updateEvaluation);
+  const evaluateFormula = useSemanticsStore((s) => s.evaluateFormula);
   const resetAll = useSemanticsStore((s) => s.resetAll);
 
   const [input, setInput] = useState("");
@@ -310,45 +307,13 @@ export default function FormulaInputBar() {
   const handleEvaluateOrSubmit = () => {
     const rawTrimmed = input.trim();
     if (!rawTrimmed) {
-      if (formula) {
-        const newId = String(Date.now());
-        addEvaluation({
-          id: newId,
-          formula,
-          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-          statusLabel: "evaluando",
-          statusState: "cargando",
-        });
-        setTimeout(() => {
-          updateEvaluation(newId, {
-            statusLabel: "evaluacion lista para conectarse al modulo de logica",
-            statusState: "exito",
-          });
-        }, 1200);
-        addLog(`evaluar formula actual: ${formula}`);
-      }
+      if (formula) evaluateFormula(formula);
       return;
     }
     const trimmed = normalizarAtajos(rawTrimmed);
 
     if (activeMode === "formula") {
-      setFormula(trimmed);
-      const newId = String(Date.now());
-      addEvaluation({
-        id: newId,
-        formula: trimmed,
-        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-        statusLabel: "evaluando",
-        statusState: "cargando",
-      });
-      setTimeout(() => {
-        updateEvaluation(newId, {
-          statusLabel: "evaluacion lista para conectarse al modulo de logica",
-          statusState: "exito",
-        });
-      }, 1200);
-      addLog(`formula guardada: ${trimmed}`);
-      addLog(`evaluar formula: ${trimmed}`);
+      evaluateFormula(trimmed);
       closeMode();
       return;
     }
@@ -361,23 +326,7 @@ export default function FormulaInputBar() {
       return;
     }
 
-    setFormula(trimmed);
-    const newId = String(Date.now());
-    addEvaluation({
-      id: newId,
-      formula: trimmed,
-      timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      statusLabel: "evaluando",
-      statusState: "cargando",
-    });
-    setTimeout(() => {
-      updateEvaluation(newId, {
-        statusLabel: "evaluacion lista para conectarse al modulo de logica",
-        statusState: "exito",
-      });
-    }, 1200);
-    addLog(`formula guardada: ${trimmed}`);
-    addLog(`evaluar formula: ${trimmed}`);
+    evaluateFormula(trimmed);
     setInput("");
     setCursorPos(0);
   };
