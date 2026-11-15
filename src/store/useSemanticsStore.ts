@@ -4,7 +4,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { FunctionDef, RelationDef } from "@/lib/logica/tipos";
-import { ajustarAlDominio } from "@/lib/logica/interpretacion";
+import { ajustarAlDominio, revisarInterpretacion } from "@/lib/logica/interpretacion";
 import { evaluar, type ResultadoEvaluacion } from "@/lib/logica/evaluador";
 import { buscarEjemplo } from "@/lib/logica/ejemplos";
 import type { DatosArchivo } from "@/lib/logica/archivo";
@@ -448,10 +448,15 @@ export const useSemanticsStore = create<SemanticsStore>()(
 
       importFromFile: (datos) =>
         set((state) => {
+          if (datos.errores.length > 0) {
+            return sincronizarActivo(state, {
+              logs: [...state.logs, "importación rechazada: el archivo tiene errores de formato"],
+            });
+          }
           const nuevoDominio =
-            datos.dominio && datos.dominio.length > 0 ? datos.dominio : state.domain;
+            datos.dominio !== undefined ? datos.dominio : state.domain;
           const tieneDefiniciones =
-            Boolean(datos.dominio?.length) ||
+            datos.dominio !== undefined ||
             Object.keys(datos.funciones).length > 0 ||
             Object.keys(datos.relaciones).length > 0 ||
             Object.keys(datos.entorno).length > 0;
@@ -465,6 +470,16 @@ export const useSemanticsStore = create<SemanticsStore>()(
           const baseEnv = tieneDefiniciones
             ? { ...state.environment, ...datos.entorno }
             : state.environment;
+
+          const comprobaciones = revisarInterpretacion(
+            { dominio: nuevoDominio, funciones: baseFunctions, relaciones: baseRelations },
+            baseEnv
+          );
+          if (tieneDefiniciones && comprobaciones.some((comprobacion) => !comprobacion.ok)) {
+            return sincronizarActivo(state, {
+              logs: [...state.logs, "importación rechazada: la interpretación contiene errores"],
+            });
+          }
 
           const { funciones: fnAjustadas, relaciones: relAjustadas } = ajustarAlDominio(
             nuevoDominio,
