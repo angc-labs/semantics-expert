@@ -502,6 +502,9 @@ export default function FormulaInputBar() {
             <span className="text-neutral-700 select-none text-base font-mono">&gt;</span>
             <textarea
               ref={textareaRef}
+              aria-label="fórmula lógica"
+              aria-describedby="formula-ayuda"
+              aria-invalid={!interpretacionValida}
               rows={1}
               value={input}
               onChange={(e) => {
@@ -548,6 +551,9 @@ export default function FormulaInputBar() {
               </svg>
             </button>
           </div>
+          <span id="formula-ayuda" className="sr-only">
+            Escribe una fórmula, usa los botones, atajos de teclado o el botón de dictado por voz.
+          </span>
           <VoiceInputControls
             onTranscript={(texto) => {
               if (!texto) return;

@@ -119,6 +119,7 @@ export default function EnvironmentPanel() {
           <span className="text-xs text-neutral-700">variable:</span>
           <input
             ref={varInputRef}
+            aria-label="nombre de variable"
             type="text"
             value={varName}
             onChange={(e) => {
