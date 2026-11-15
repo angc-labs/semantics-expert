@@ -198,7 +198,13 @@ class Lector {
     const { funciones, relaciones } = this.lenguaje;
     const rel = relaciones[nombre.texto];
     const tieneParentesis = this.actual().tipo === "abre";
-    const argumentos = tieneParentesis ? this.argumentos() : [];
+    // si es un predicado 0-ario (o nombre desconocido sin aridad > 0) y lo que sigue
+    // es una formula entre parentesis —ej. "∀x(P(x) → Q(x))" donde x no es predicado n-ario—,
+    // no tratamos el "(" como lista de argumentos para dar un error claro.
+    const leeComoArgumentos =
+      tieneParentesis &&
+      (rel ? rel.arity > 0 : Boolean(funciones[nombre.texto]) || this.pareceListaDeTerminos());
+    const argumentos = leeComoArgumentos ? this.argumentos() : [];
 
     if (!rel) {
       if (funciones[nombre.texto]) {
@@ -224,6 +230,35 @@ class Lector {
       );
     }
     return { tipo: "atomo", predicado: nombre.texto, argumentos };
+  }
+
+  // distingue "P(x, f(y))" (lista de terminos) de "(P(x) → Q(x))" (subformula con conectivos/cuantificadores)
+  private pareceListaDeTerminos(): boolean {
+    let k = this.indice;
+    if (this.tokens[k]?.tipo !== "abre") return false;
+    let prof = 0;
+    while (k < this.tokens.length) {
+      const tk = this.tokens[k].tipo;
+      if (tk === "abre") prof++;
+      else if (tk === "cierra") {
+        prof--;
+        if (prof === 0) return true;
+      } else if (
+        tk === "negacion" ||
+        tk === "conjuncion" ||
+        tk === "disyuncion" ||
+        tk === "implicacion" ||
+        tk === "bicondicional" ||
+        tk === "universal" ||
+        tk === "existencial"
+      ) {
+        return false;
+      } else if (tk === "fin") {
+        return true;
+      }
+      k++;
+    }
+    return true;
   }
 
   // lee ( termino , termino ... ) incluyendo los parentesis

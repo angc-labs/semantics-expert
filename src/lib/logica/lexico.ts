@@ -66,6 +66,19 @@ export function tokenizar(
       continue;
     }
     if (ES_INICIO_NOMBRE.test(c)) {
+      const prev = tokens[tokens.length - 1]?.tipo;
+      // tras ∀ o ∃, si el usuario escribe "∃yR(x,y)" sin espacio, la variable es de 1 letra
+      // para no pegarla con el predicado en mayuscula que sigue (ej. "y" + "R")
+      if (
+        (prev === "universal" || prev === "existencial") &&
+        /[a-z]/.test(c) &&
+        i + 1 < texto.length &&
+        /[A-Z]/.test(texto[i + 1])
+      ) {
+        tokens.push({ tipo: "nombre", texto: c, posicion: i });
+        i++;
+        continue;
+      }
       let j = i + 1;
       while (j < texto.length && ES_PARTE_NOMBRE.test(texto[j])) j++;
       tokens.push({ tipo: "nombre", texto: texto.slice(i, j), posicion: i });
