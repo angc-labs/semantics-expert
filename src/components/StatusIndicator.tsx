@@ -32,7 +32,7 @@ export default function StatusIndicator({
 
   return (
     <div
-      className={`inline-flex items-center gap-2 text-xs text-neutral-500 select-none transition-all ${className}`}
+      className={`inline-flex items-center gap-2 text-xs text-neutral-700 select-none transition-all ${className}`}
     >
       <span
         className={`inline-block w-2 h-2 rounded-full ${colorPunto} ${

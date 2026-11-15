@@ -32,7 +32,7 @@ export default function ValidationAlerts() {
         {errores.map((c) => (
           <li key={c.id}>
             <span className="font-medium">{c.titulo}</span>
-            {c.detalle && <span className="text-neutral-500"> — {c.detalle}</span>}
+            {c.detalle && <span className="text-neutral-700"> — {c.detalle}</span>}
           </li>
         ))}
       </ul>

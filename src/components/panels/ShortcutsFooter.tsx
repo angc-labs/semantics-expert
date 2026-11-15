@@ -16,10 +16,8 @@ const SHORTCUTS = [
 // pie de texto debajo del input con los atajos copiables
 export default function ShortcutsFooter({ copiedShortcut, onCopy }: ShortcutsFooterProps) {
   return (
-    <div className="mt-2 flex items-center justify-between text-[11px] text-neutral-400 px-4 flex-wrap gap-y-1">
+    <div className="mt-2 flex items-center justify-between text-[11px] text-neutral-600 px-4 flex-wrap gap-y-1">
       <span className="flex items-center gap-1 flex-wrap">
-        <strong className="text-neutral-600">/</strong> comandos ·{" "}
-        <strong className="text-neutral-600">@</strong> simbolos ·{" "}
         <span>atajos:</span>
         {SHORTCUTS.map((s) => {
           const isCopied = copiedShortcut === s.val;

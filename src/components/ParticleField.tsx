@@ -172,6 +172,13 @@ export default function ParticleField() {
       ref={canvasRef}
       aria-hidden="true"
       className="pointer-events-none fixed inset-0 z-0"
+      // solo se ve en los bordes de la pagina para no estorbar la lectura del centro
+      style={{
+        WebkitMaskImage:
+          "linear-gradient(to right, black 0, black calc(50% - 440px), transparent calc(50% - 350px), transparent calc(50% + 350px), black calc(50% + 440px), black 100%)",
+        maskImage:
+          "linear-gradient(to right, black 0, black calc(50% - 440px), transparent calc(50% - 350px), transparent calc(50% + 350px), black calc(50% + 440px), black 100%)",
+      }}
     />
   );
 }

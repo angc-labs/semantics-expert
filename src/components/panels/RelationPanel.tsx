@@ -196,7 +196,7 @@ export default function RelationPanel() {
       onKeyDown={(e) => {
         if (e.key === "Escape") closeMode();
       }}
-      className="panel-in rounded-[28px] border border-neutral-200 bg-white shadow-[0_8px_30px_rgba(0,0,0,0.06)] p-5 space-y-4"
+      className="panel-in rounded-[28px] border border-neutral-400 bg-white shadow-[0_8px_30px_rgba(0,0,0,0.06)] p-5 space-y-4"
     >
       <div className="flex items-center justify-between text-xs">
         <span className="bg-neutral-900 text-white px-2.5 py-0.5 rounded-full font-semibold">
@@ -205,7 +205,7 @@ export default function RelationPanel() {
         <button
           type="button"
           onClick={closeMode}
-          className="text-neutral-500 hover:text-neutral-900"
+          className="text-neutral-700 hover:text-neutral-900"
         >
           esc para cancelar
         </button>
@@ -213,7 +213,7 @@ export default function RelationPanel() {
 
       <div className="flex items-center gap-4 text-sm flex-wrap">
         <label className="flex items-center gap-2">
-          <span className="text-xs text-neutral-500">nombre:</span>
+          <span className="text-xs text-neutral-700">nombre:</span>
           <input
             ref={nameInputRef}
             type="text"
@@ -223,12 +223,12 @@ export default function RelationPanel() {
               if (relTupleError) setRelTupleError(null);
             }}
             placeholder="P"
-            className="w-20 border border-neutral-300 rounded-xl px-2 py-1 text-sm outline-none focus:border-neutral-900"
+            className="w-20 border border-neutral-400 rounded-xl px-2 py-1 text-sm outline-none focus:border-neutral-900"
           />
         </label>
 
         <div className="flex items-center gap-2">
-          <span className="text-xs text-neutral-500">aridad (n):</span>
+          <span className="text-xs text-neutral-700">aridad (n):</span>
           <div className="flex items-center gap-1">
             {[1, 2, 3].map((n) => (
               <button
@@ -243,7 +243,7 @@ export default function RelationPanel() {
                 className={`px-2.5 py-1 text-xs rounded-xl border ${
                   relArity === n
                     ? "bg-neutral-900 text-white border-neutral-900"
-                    : "bg-white text-neutral-700 border-neutral-300 hover:bg-neutral-100"
+                    : "bg-white text-neutral-700 border-neutral-400 hover:bg-neutral-100"
                 }`}
               >
                 {n}-aria
@@ -262,7 +262,7 @@ export default function RelationPanel() {
                 setRelPendingOutDomain(null);
               }}
               title="aridad personalizada (1 a 6)"
-              className="w-14 border border-neutral-300 rounded-xl px-2 py-1 text-xs outline-none focus:border-neutral-900"
+              className="w-14 border border-neutral-400 rounded-xl px-2 py-1 text-xs outline-none focus:border-neutral-900"
             />
           </div>
         </div>
@@ -275,7 +275,7 @@ export default function RelationPanel() {
               setRelSelectedTuples(all);
               setRelTupleError(null);
             }}
-            className="px-2 py-1 border border-neutral-300 rounded-xl hover:bg-neutral-100"
+            className="px-2 py-1 border border-neutral-400 rounded-xl hover:bg-neutral-100"
           >
             todas d^{relArity}
           </button>
@@ -285,21 +285,21 @@ export default function RelationPanel() {
               setRelSelectedTuples(new Set());
               setRelTupleError(null);
             }}
-            className="px-2 py-1 border border-neutral-300 rounded-xl hover:bg-neutral-100"
+            className="px-2 py-1 border border-neutral-400 rounded-xl hover:bg-neutral-100"
           >
             limpiar
           </button>
         </div>
       </div>
 
-      <div className="border border-neutral-300 rounded-xl p-2.5 bg-neutral-50/70 space-y-2.5">
+      <div className="border border-neutral-400 rounded-xl p-2.5 bg-neutral-50/70 space-y-2.5">
         <div className="text-xs font-semibold text-neutral-700">
           armar tuplas personalizadas ({relArity}-tuplas)
         </div>
 
         {domain.length > 0 && (
           <div className="flex items-center gap-1.5 flex-wrap text-xs">
-            <span className="text-neutral-500 mr-1">por posicion:</span>
+            <span className="text-neutral-700 mr-1">por posicion:</span>
             <span className="font-semibold text-neutral-600">
               {relArity > 1 ? "(" : ""}
             </span>
@@ -315,7 +315,7 @@ export default function RelationPanel() {
                       return copy;
                     });
                   }}
-                  className="border border-neutral-300 rounded-xl bg-white px-2 py-1 text-xs outline-none focus:border-neutral-900"
+                  className="border border-neutral-400 rounded-xl bg-white px-2 py-1 text-xs outline-none focus:border-neutral-900"
                 >
                   {domain.map((d) => (
                     <option key={d} value={d}>
@@ -324,7 +324,7 @@ export default function RelationPanel() {
                   ))}
                 </select>
                 {idx < relArity - 1 && (
-                  <span className="text-neutral-400 font-semibold">,</span>
+                  <span className="text-neutral-600 font-semibold">,</span>
                 )}
               </React.Fragment>
             ))}
@@ -364,7 +364,7 @@ export default function RelationPanel() {
                     (_, i) => domain[i % Math.max(domain.length, 1)] ?? i + 1
                   ).join(", ")}) o separadas por ;) y presiona enter...`
             }
-            className="flex-1 border border-neutral-300 rounded-xl bg-white px-2.5 py-1.5 text-xs outline-none focus:border-neutral-900"
+            className="flex-1 border border-neutral-400 rounded-xl bg-white px-2.5 py-1.5 text-xs outline-none focus:border-neutral-900"
           />
           <button
             type="button"
@@ -392,12 +392,12 @@ export default function RelationPanel() {
         )}
       </div>
 
-      <div className="flex flex-wrap items-center gap-1.5 p-2 border border-neutral-300 rounded-xl bg-white min-h-[38px]">
-        <span className="text-xs text-neutral-400 font-semibold mr-1">
+      <div className="flex flex-wrap items-center gap-1.5 p-2 border border-neutral-400 rounded-xl bg-white min-h-[38px]">
+        <span className="text-xs text-neutral-600 font-semibold mr-1">
           {relName || "P"}^I = {"{"}
         </span>
         {relSelectedTuples.size === 0 ? (
-          <span className="text-xs text-neutral-400 italic">
+          <span className="text-xs text-neutral-600 italic">
             ninguna tupla agregada todavia
           </span>
         ) : (
@@ -419,7 +419,7 @@ export default function RelationPanel() {
                       return next;
                     })
                   }
-                  className="text-neutral-400 hover:text-white ml-0.5"
+                  className="text-neutral-600 hover:text-white ml-0.5"
                 >
                   ×
                 </button>
@@ -427,12 +427,12 @@ export default function RelationPanel() {
             );
           })
         )}
-        <span className="text-xs text-neutral-400 font-semibold ml-1">{"}"}</span>
+        <span className="text-xs text-neutral-600 font-semibold ml-1">{"}"}</span>
       </div>
 
       {candidateTuples.length > 0 && (
-        <div className="border border-neutral-200 rounded-xl p-2.5 bg-neutral-50 space-y-2 max-h-40 overflow-y-auto">
-          <div className="text-xs text-neutral-500">
+        <div className="border border-neutral-400 rounded-xl p-2.5 bg-neutral-50 space-y-2 max-h-40 overflow-y-auto">
+          <div className="text-xs text-neutral-700">
             o elige directo del conjunto d^{relArity}:
           </div>
           <div className="flex flex-wrap gap-1.5">
@@ -455,7 +455,7 @@ export default function RelationPanel() {
                   className={`px-2.5 py-1 text-xs rounded-xl border transition-colors ${
                     isSelected
                       ? "bg-neutral-900 text-white border-neutral-900 font-semibold"
-                      : "bg-white text-neutral-700 border-neutral-300 hover:bg-neutral-100"
+                      : "bg-white text-neutral-700 border-neutral-400 hover:bg-neutral-100"
                   }`}
                 >
                   {label}
@@ -466,7 +466,7 @@ export default function RelationPanel() {
         </div>
       )}
 
-      <div className="flex items-center justify-between text-xs text-neutral-500">
+      <div className="flex items-center justify-between text-xs text-neutral-700">
         <span>
           seleccionadas: {relSelectedTuples.size} tupla(s) (no se admiten relaciones vacias)
         </span>

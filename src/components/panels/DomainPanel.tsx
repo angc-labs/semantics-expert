@@ -28,7 +28,7 @@ export default function DomainPanel() {
   };
 
   return (
-    <div className="panel-in rounded-[28px] border border-neutral-200 bg-white shadow-[0_8px_30px_rgba(0,0,0,0.06)] p-5 space-y-4">
+    <div className="panel-in rounded-[28px] border border-neutral-400 bg-white shadow-[0_8px_30px_rgba(0,0,0,0.06)] p-5 space-y-4">
       <div className="flex items-center justify-between text-xs">
         <span className="bg-neutral-900 text-white px-2.5 py-0.5 rounded-full font-semibold">
           /dominio · conjunto d finito y no vacio
@@ -36,14 +36,14 @@ export default function DomainPanel() {
         <button
           type="button"
           onClick={closeMode}
-          className="text-neutral-500 hover:text-neutral-900"
+          className="text-neutral-700 hover:text-neutral-900"
         >
           esc para cancelar
         </button>
       </div>
 
-      <div className="flex flex-wrap items-center gap-1.5 p-2 border border-neutral-300 rounded-xl bg-neutral-50 min-h-[42px]">
-        <span className="text-neutral-400 font-semibold mr-1">D = {"{"}</span>
+      <div className="flex flex-wrap items-center gap-1.5 p-2 border border-neutral-400 rounded-xl bg-neutral-50 min-h-[42px]">
+        <span className="text-neutral-600 font-semibold mr-1">D = {"{"}</span>
         {draft.map((el) => (
           <span
             key={el}
@@ -53,7 +53,7 @@ export default function DomainPanel() {
             <button
               type="button"
               onClick={() => setDraft((prev) => prev.filter((item) => item !== el))}
-              className="text-neutral-400 hover:text-white ml-0.5"
+              className="text-neutral-600 hover:text-white ml-0.5"
             >
               ×
             </button>
@@ -101,10 +101,10 @@ export default function DomainPanel() {
           placeholder="escribe un elemento y presiona espacio, coma o enter..."
           className="flex-1 min-w-[180px] bg-transparent text-sm outline-none"
         />
-        <span className="text-neutral-400 font-semibold ml-1">{"}"}</span>
+        <span className="text-neutral-600 font-semibold ml-1">{"}"}</span>
       </div>
 
-      <div className="flex items-center justify-between text-xs text-neutral-500">
+      <div className="flex items-center justify-between text-xs text-neutral-700">
         <span>espacio, coma o enter agrega · backspace borra el ultimo</span>
         <button
           type="button"
