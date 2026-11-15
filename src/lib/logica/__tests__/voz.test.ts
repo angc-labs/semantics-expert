@@ -17,4 +17,12 @@ describe("normalizarDictado", () => {
   it("conserva la formula formal ya escrita", () => {
     expect(normalizarDictado("∃x (P(x) -> Q(x))")).toBe("∃x (P(x) → Q(x))");
   });
+
+  it("conserva y como variable cuantificada y reconoce nombres hablados", () => {
+    expect(normalizarDictado("existe y tal que predicado P de y")).toBe("∃y P(y)");
+  });
+
+  it("convierte elementos numéricos dictados", () => {
+    expect(normalizarDictado("P de uno coma dos")).toBe("P(1,2)");
+  });
 });

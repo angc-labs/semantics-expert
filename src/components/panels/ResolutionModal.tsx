@@ -25,6 +25,12 @@ function textoParaLeer(item: EvaluationItem): string {
   return `La fórmula ${item.formula} es ${resultado.etiqueta}. ${razones.join(" ")}`.slice(0, 5000);
 }
 
+function razonDecisivaParaLeer(item: EvaluationItem): string {
+  const resultado = item.resultado;
+  if (!resultado?.ok) return textoParaLeer(item);
+  return `La razón decisiva para que la fórmula sea ${resultado.etiqueta} es: ${resultado.explicacion.razon}.`;
+}
+
 function Seccion({ titulo, children }: { titulo: string; children: React.ReactNode }) {
   return (
     <section className="space-y-2">
@@ -96,7 +102,10 @@ export default function ResolutionModal({
               estado={item.statusState ?? "cargando"}
               pulsando={item.statusState === "cargando"}
             />
-            <SpeechReader text={textoParaLeer(item)} />
+            <SpeechReader
+              text={textoParaLeer(item)}
+              decisiveText={razonDecisivaParaLeer(item)}
+            />
             {r?.ok === false && (
               <Seccion titulo="errores">
                 <ul className="list-disc space-y-1 pl-5 text-sm text-rose-700">
