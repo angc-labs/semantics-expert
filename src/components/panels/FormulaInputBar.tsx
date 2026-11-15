@@ -7,7 +7,6 @@ import { analizarArchivoAdjunto } from "@/lib/logica/archivo";
 import { revisarInterpretacion } from "@/lib/logica/interpretacion";
 import MenuDropdown, { type MenuItem } from "./MenuDropdown";
 import VisualBuilder from "./VisualBuilder";
-import ShortcutsFooter from "./ShortcutsFooter";
 
 const SYMBOL_ITEMS: MenuItem[] = [
   {
@@ -225,7 +224,6 @@ export default function FormulaInputBar() {
   const [dismissedAt, setDismissedAt] = useState<number | null>(null);
   const [modoEntrada, setModoEntrada] = useState<"texto" | "visual">("texto");
   const [selectorAbierto, setSelectorAbierto] = useState(false);
-  const [copiedShortcut, setCopiedShortcut] = useState<string | null>(null);
 
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const archivoRef = useRef<HTMLInputElement | null>(null);
@@ -337,18 +335,6 @@ export default function FormulaInputBar() {
 
     if (item.insertText) {
       insertAtCursor(item.insertText, activeTrigger.startIndex, activeTrigger.endIndex);
-    }
-  };
-
-  const copyShortcutToClipboard = async (text: string) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopiedShortcut(text);
-      setTimeout(() => {
-        setCopiedShortcut((prev) => (prev === text ? null : prev));
-      }, 1500);
-    } catch {
-      // si el navegador bloquea el portapapeles no hacemos nada
     }
   };
 
@@ -615,11 +601,6 @@ export default function FormulaInputBar() {
           }}
         />
       )}
-
-      <ShortcutsFooter
-        copiedShortcut={copiedShortcut}
-        onCopy={copyShortcutToClipboard}
-      />
     </div>
   );
 }
