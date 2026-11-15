@@ -42,3 +42,9 @@
     animation: none;
   }
 }
+
+/* arbol sintactico: nodos sin conectores visibles */
+.arbol-nodo .react-flow__handle {
+  opacity: 0;
+  pointer-events: none;
+}
