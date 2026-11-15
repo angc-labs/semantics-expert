@@ -1,13 +1,14 @@
 "use client";
 
 import React, { useRef, useEffect } from "react";
+import type { ActiveMode } from "@/store/useSemanticsStore";
 
 export interface MenuItem {
   id: string;
   trigger: "@" | "/";
   label: string;
   insertText?: string;
-  mode?: "dominio" | "funcion" | "relacion" | "entorno" | "formula";
+  mode?: Exclude<ActiveMode, null>;
   description: string;
   aliases: string[];
 }
@@ -52,11 +53,11 @@ export default function MenuDropdown({
     <div
       ref={menuRef}
       role="listbox"
-      className="panel-in absolute bottom-full left-0 mb-3 w-full max-h-64 overflow-y-auto rounded-3xl border border-neutral-200 bg-white/95 backdrop-blur p-1.5 shadow-[0_12px_40px_rgba(0,0,0,0.12)] z-20"
+      className="panel-in absolute bottom-full left-0 mb-3 w-full max-h-64 overflow-y-auto rounded-3xl border border-neutral-400 bg-white/95 backdrop-blur p-1.5 shadow-[0_12px_40px_rgba(0,0,0,0.12)] z-20"
     >
       <div
         data-menu-header
-        className="sticky -top-1.5 z-10 -mt-1.5 pt-3 pb-1.5 px-3.5 rounded-t-2xl bg-white/95 backdrop-blur text-[11px] text-neutral-400 flex justify-between"
+        className="sticky -top-1.5 z-10 -mt-1.5 pt-3 pb-1.5 px-3.5 rounded-t-2xl bg-white/95 backdrop-blur text-[11px] text-neutral-600 flex justify-between"
       >
         <span>
           {triggerType === "@"
@@ -86,7 +87,7 @@ export default function MenuDropdown({
             <span className="font-semibold">{item.label}</span>
             <span
               className={`text-xs truncate ml-4 ${
-                isSelected ? "text-neutral-300" : "text-neutral-500"
+                isSelected ? "text-neutral-700" : "text-neutral-700"
               }`}
             >
               {item.description}

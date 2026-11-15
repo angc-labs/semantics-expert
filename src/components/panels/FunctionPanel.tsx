@@ -11,19 +11,25 @@ export default function FunctionPanel() {
   const domain = useSemanticsStore((s) => s.domain);
   const functions = useSemanticsStore((s) => s.functions);
   const relations = useSemanticsStore((s) => s.relations);
+  const activeMode = useSemanticsStore((s) => s.activeMode);
   const editingName = useSemanticsStore((s) => s.editingName);
   const saveFunctionDef = useSemanticsStore((s) => s.saveFunctionDef);
   const closeMode = useSemanticsStore((s) => s.closeMode);
 
+  const esModoConstante = activeMode === "constante";
   const existing = editingName ? functions[editingName] : undefined;
-  const [funcName, setFuncName] = useState(existing?.name ?? "f");
-  const [funcArity, setFuncArity] = useState(existing?.arity ?? 1);
+  const [funcName, setFuncName] = useState(existing?.name ?? (esModoConstante ? "c" : "f"));
+  const [funcArity, setFuncArity] = useState(existing?.arity ?? (esModoConstante ? 0 : 1));
   const [funcMapping, setFuncMapping] = useState<Record<string, string>>(() => {
     if (existing) return { ...existing.mapping };
     const init: Record<string, string> = {};
     if (domain.length > 0) {
-      for (const t of productoCartesiano(domain, 1)) {
-        init[t.join(",")] = domain[0];
+      if (esModoConstante) {
+        init[""] = domain[0];
+      } else {
+        for (const t of productoCartesiano(domain, 1)) {
+          init[t.join(",")] = domain[0];
+        }
       }
     }
     return init;
@@ -82,16 +88,16 @@ export default function FunctionPanel() {
       onKeyDown={(e) => {
         if (e.key === "Escape") closeMode();
       }}
-      className="panel-in rounded-[28px] border border-neutral-200 bg-white shadow-[0_8px_30px_rgba(0,0,0,0.06)] p-5 space-y-4"
+      className="panel-in rounded-[28px] border border-neutral-400 bg-white shadow-[0_8px_30px_rgba(0,0,0,0.06)] p-5 space-y-4"
     >
       <div className="flex items-center justify-between text-xs">
         <span className="bg-neutral-900 text-white px-2.5 py-0.5 rounded-full font-semibold">
-          /funcion · {funcArity === 0 ? "constante c en d" : `simbolo de funcion f^I : d^${funcArity} → d`}
+          /{esModoConstante ? "constante" : "funcion"} · {funcArity === 0 ? "constante c en d" : `simbolo de funcion f^I : d^${funcArity} → d`}
         </span>
         <button
           type="button"
           onClick={closeMode}
-          className="text-neutral-500 hover:text-neutral-900"
+          className="text-neutral-700 hover:text-neutral-900"
         >
           esc para cancelar
         </button>
@@ -99,7 +105,7 @@ export default function FunctionPanel() {
 
       <div className="flex items-center gap-4 text-sm flex-wrap">
         <label className="flex items-center gap-2">
-          <span className="text-xs text-neutral-500">nombre:</span>
+          <span className="text-xs text-neutral-700">nombre:</span>
           <input
             ref={nameInputRef}
             type="text"
@@ -109,12 +115,12 @@ export default function FunctionPanel() {
               if (funcError) setFuncError(null);
             }}
             placeholder="f"
-            className="w-20 border border-neutral-300 rounded-xl px-2 py-1 text-sm outline-none focus:border-neutral-900"
+            className="w-20 border border-neutral-400 rounded-xl px-2 py-1 text-sm outline-none focus:border-neutral-900"
           />
         </label>
 
         <div className="flex items-center gap-2">
-          <span className="text-xs text-neutral-500">aridad (n):</span>
+          <span className="text-xs text-neutral-700">aridad (n):</span>
           <div className="flex items-center gap-1">
             {[0, 1, 2, 3].map((n) => (
               <button
@@ -127,7 +133,7 @@ export default function FunctionPanel() {
                 className={`px-2.5 py-1 text-xs rounded-xl border ${
                   funcArity === n
                     ? "bg-neutral-900 text-white border-neutral-900"
-                    : "bg-white text-neutral-700 border-neutral-300 hover:bg-neutral-100"
+                    : "bg-white text-neutral-700 border-neutral-400 hover:bg-neutral-100"
                 }`}
               >
                 {n === 0 ? "0 (constante)" : `${n}-aria`}
@@ -148,7 +154,7 @@ export default function FunctionPanel() {
           primero define un dominio d que no este vacio con /dominio
         </div>
       ) : funcArity === 0 ? (
-        <div className="flex items-center gap-2 p-3 bg-neutral-50 border border-neutral-200 rounded-xl text-sm">
+        <div className="flex items-center gap-2 p-3 bg-neutral-50 border border-neutral-400 rounded-xl text-sm">
           <span className="font-semibold text-neutral-700">{funcName || "c"} =</span>
           <div className="flex items-center gap-1 flex-wrap">
             {domain.map((d) => {
@@ -161,7 +167,7 @@ export default function FunctionPanel() {
                   className={`px-3 py-1 text-xs rounded-full border transition-colors ${
                     isSel
                       ? "bg-neutral-900 text-white border-neutral-900 font-semibold"
-                      : "bg-white text-neutral-700 border-neutral-300 hover:bg-neutral-100"
+                      : "bg-white text-neutral-700 border-neutral-400 hover:bg-neutral-100"
                   }`}
                 >
                   {d}
@@ -171,8 +177,8 @@ export default function FunctionPanel() {
           </div>
         </div>
       ) : (
-        <div className="space-y-1.5 max-h-52 overflow-y-auto border border-neutral-200 rounded-xl p-2 bg-neutral-50">
-          <div className="text-xs text-neutral-500 mb-1">
+        <div className="space-y-1.5 max-h-52 overflow-y-auto border border-neutral-400 rounded-xl p-2 bg-neutral-50">
+          <div className="text-xs text-neutral-700 mb-1">
             elige que valor de d da cada combinacion de {funcName || "f"}:
           </div>
           {candidateTuples.map((tuple) => {
@@ -181,7 +187,7 @@ export default function FunctionPanel() {
             return (
               <div
                 key={key}
-                className="flex items-center justify-between text-sm bg-white px-2.5 py-1.5 rounded-xl border border-neutral-200"
+                className="flex items-center justify-between text-sm bg-white px-2.5 py-1.5 rounded-xl border border-neutral-400"
               >
                 <span className="font-semibold">
                   {funcName || "f"}({tuple.join(", ")}) ↦
@@ -197,7 +203,7 @@ export default function FunctionPanel() {
                       className={`px-2 py-0.5 text-xs rounded-xl border transition-colors ${
                         currentVal === d
                           ? "bg-neutral-900 text-white border-neutral-900 font-semibold"
-                          : "bg-white text-neutral-700 border-neutral-300 hover:bg-neutral-100"
+                          : "bg-white text-neutral-700 border-neutral-400 hover:bg-neutral-100"
                       }`}
                     >
                       {d}
@@ -210,7 +216,7 @@ export default function FunctionPanel() {
         </div>
       )}
 
-      <div className="flex items-center justify-between text-xs text-neutral-500">
+      <div className="flex items-center justify-between text-xs text-neutral-700">
         <span>
           {funcArity === 0
             ? "las constantes se evaluan como elementos fijos en d"

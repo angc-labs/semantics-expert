@@ -46,7 +46,7 @@ export default function DefinitionChips() {
               .map(([k, v]) => `${fn.name}(${k})=${v}`)
               .join(", "),
       hasError: !comprobaciones.find((c) => c.simbolo === `f:${fn.name}`)?.ok,
-      onClick: () => enterMode("funcion", fn.name),
+      onClick: () => enterMode(fn.arity === 0 ? "constante" : "funcion", fn.name),
       onRemove: () => deleteFunction(fn.name),
     })),
     ...Object.values(relations).map((rel) => ({
@@ -97,10 +97,10 @@ export default function DefinitionChips() {
             }
           }}
           className={`chip-in group inline-flex items-center gap-2 max-w-full rounded-full border bg-white/90 backdrop-blur pl-3 pr-3 py-1.5 text-xs shadow-sm cursor-pointer transition-all hover:border-neutral-900 hover:shadow-md focus:outline-none focus-visible:border-neutral-900 ${
-            chip.hasError ? "border-amber-400 bg-amber-50/50" : "border-neutral-200"
+            chip.hasError ? "border-amber-400 bg-amber-50/50" : "border-neutral-400"
           }`}
         >
-          <span className="text-neutral-400 font-semibold">{chip.label}</span>
+          <span className="text-neutral-600 font-semibold">{chip.label}</span>
           <span className="text-neutral-800 truncate max-w-[240px]">{chip.value}</span>
           {chip.hasError && <span className="text-amber-600 font-bold">!</span>}
           {chip.onRemove && (
@@ -111,7 +111,7 @@ export default function DefinitionChips() {
                 e.stopPropagation();
                 chip.onRemove?.();
               }}
-              className="-mr-1 flex h-4 w-4 items-center justify-center rounded-full text-neutral-400 opacity-0 transition-opacity group-hover:opacity-100 hover:bg-neutral-900 hover:text-white"
+              className="-mr-1 flex h-4 w-4 items-center justify-center rounded-full text-neutral-600 opacity-0 transition-opacity group-hover:opacity-100 hover:bg-neutral-900 hover:text-white"
             >
               ×
             </button>

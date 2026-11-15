@@ -10,8 +10,11 @@ export default function EnvironmentPanel() {
   const functions = useSemanticsStore((s) => s.functions);
   const relations = useSemanticsStore((s) => s.relations);
   const environment = useSemanticsStore((s) => s.environment);
+  const activeMode = useSemanticsStore((s) => s.activeMode);
   const saveEnvironmentDraft = useSemanticsStore((s) => s.saveEnvironmentDraft);
   const closeMode = useSemanticsStore((s) => s.closeMode);
+
+  const comandoLabel = activeMode === "variable" ? "/variable" : "/entorno";
 
   const [draft, setDraft] = useState<Record<string, string>>({ ...environment });
   const [varName, setVarName] = useState("x");
@@ -68,23 +71,23 @@ export default function EnvironmentPanel() {
       onKeyDown={(e) => {
         if (e.key === "Escape") closeMode();
       }}
-      className="panel-in rounded-[28px] border border-neutral-200 bg-white shadow-[0_8px_30px_rgba(0,0,0,0.06)] p-5 space-y-4"
+      className="panel-in rounded-[28px] border border-neutral-400 bg-white shadow-[0_8px_30px_rgba(0,0,0,0.06)] p-5 space-y-4"
     >
       <div className="flex items-center justify-between text-xs">
         <span className="bg-neutral-900 text-white px-2.5 py-0.5 rounded-full font-semibold">
-          /entorno · valores para variables libres en d
+          {comandoLabel} · valores para variables libres en d
         </span>
         <button
           type="button"
           onClick={closeMode}
-          className="text-neutral-500 hover:text-neutral-900"
+          className="text-neutral-700 hover:text-neutral-900"
         >
           esc para cancelar
         </button>
       </div>
 
       {Object.keys(draft).length > 0 && (
-        <div className="flex flex-wrap gap-1.5 p-2 bg-neutral-50 border border-neutral-200 rounded-xl">
+        <div className="flex flex-wrap gap-1.5 p-2 bg-neutral-50 border border-neutral-400 rounded-xl">
           {Object.entries(draft).map(([v, val]) => (
             <span
               key={v}
@@ -102,7 +105,7 @@ export default function EnvironmentPanel() {
                     return copy;
                   })
                 }
-                className="text-neutral-400 hover:text-white"
+                className="text-neutral-600 hover:text-white"
               >
                 ×
               </button>
@@ -113,7 +116,7 @@ export default function EnvironmentPanel() {
 
       <div className="flex items-center gap-3 flex-wrap text-sm">
         <label className="flex items-center gap-1.5">
-          <span className="text-xs text-neutral-500">variable:</span>
+          <span className="text-xs text-neutral-700">variable:</span>
           <input
             ref={varInputRef}
             type="text"
@@ -123,14 +126,14 @@ export default function EnvironmentPanel() {
               if (envError) setEnvError(null);
             }}
             placeholder="x"
-            className="w-16 border border-neutral-300 rounded-xl px-2 py-1 text-sm outline-none focus:border-neutral-900"
+            className="w-16 border border-neutral-400 rounded-xl px-2 py-1 text-sm outline-none focus:border-neutral-900"
           />
         </label>
 
-        <span className="text-neutral-400">↦</span>
+        <span className="text-neutral-600">↦</span>
 
         <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="text-xs text-neutral-500">valor en d:</span>
+          <span className="text-xs text-neutral-700">valor en d:</span>
           {domain.map((d) => (
             <button
               key={d}
@@ -158,7 +161,7 @@ export default function EnvironmentPanel() {
               className={`px-2.5 py-1 text-xs rounded-xl border ${
                 varValue === d
                   ? "bg-neutral-900 text-white border-neutral-900 font-semibold"
-                  : "bg-white text-neutral-700 border-neutral-300 hover:bg-neutral-100"
+                  : "bg-white text-neutral-700 border-neutral-400 hover:bg-neutral-100"
               }`}
             >
               {d}
@@ -181,7 +184,7 @@ export default function EnvironmentPanel() {
         </div>
       )}
 
-      <div className="flex items-center justify-between text-xs text-neutral-500">
+      <div className="flex items-center justify-between text-xs text-neutral-700">
         <span>elige la variable y su valor dentro de d</span>
         <button
           type="button"
