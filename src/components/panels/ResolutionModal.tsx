@@ -6,6 +6,24 @@ import StatusIndicator from "@/components/StatusIndicator";
 import SyntaxTree from "@/components/panels/SyntaxTree";
 import type { EvaluationItem } from "@/store/useSemanticsStore";
 import Demostracion, { FUENTE_CLASICA } from "@/components/panels/Demostracion";
+import SpeechReader from "@/components/panels/SpeechReader";
+
+function textoParaLeer(item: EvaluationItem): string {
+  const resultado = item.resultado;
+  if (!resultado?.ok) {
+    return `La fórmula ${item.formula} no tiene valor de verdad. ${
+      resultado?.errores.map((error) => error.mensaje).join(". ") ?? "Hay errores de validación."
+    }`;
+  }
+
+  const razones: string[] = [];
+  const recorrer = (explicacion: typeof resultado.explicacion) => {
+    razones.push(`${explicacion.formula}: ${explicacion.razon}.`);
+    explicacion.hijos.forEach(recorrer);
+  };
+  recorrer(resultado.explicacion);
+  return `La fórmula ${item.formula} es ${resultado.etiqueta}. ${razones.join(" ")}`.slice(0, 5000);
+}
 
 function Seccion({ titulo, children }: { titulo: string; children: React.ReactNode }) {
   return (
@@ -78,6 +96,7 @@ export default function ResolutionModal({
               estado={item.statusState ?? "cargando"}
               pulsando={item.statusState === "cargando"}
             />
+            <SpeechReader text={textoParaLeer(item)} />
             {r?.ok === false && (
               <Seccion titulo="errores">
                 <ul className="list-disc space-y-1 pl-5 text-sm text-rose-700">

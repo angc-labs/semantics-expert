@@ -8,6 +8,7 @@ import { revisarInterpretacion } from "@/lib/logica/interpretacion";
 import MenuDropdown, { type MenuItem } from "./MenuDropdown";
 import VisualBuilder from "./VisualBuilder";
 import ShortcutsFooter from "./ShortcutsFooter";
+import VoiceInputControls from "./VoiceInputControls";
 
 const SYMBOL_ITEMS: MenuItem[] = [
   {
@@ -528,6 +529,12 @@ export default function FormulaInputBar() {
               </svg>
             </button>
           </div>
+          <VoiceInputControls
+            onTranscript={(texto) => {
+              if (!texto) return;
+              insertAtCursor(`${input && cursorPos > 0 ? " " : ""}${texto}`);
+            }}
+          />
           <div className="mt-2 flex flex-wrap items-center pl-1">
             <div className="relative z-40 shrink-0">
               <button
