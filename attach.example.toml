@@ -1,0 +1,29 @@
+# Ejemplo de archivo adjunto (.txt o .toml) para el Evaluador Semántico
+# Las líneas con # o // se ignoran.
+
+# 1. Dominio D (finito y no vacío)
+[dominio]
+D = { 1, 2, 3 }
+
+# 2. Constantes y funciones
+[funciones]
+constante i = 1
+s/1 = { (1) -> 2, (2) -> 3, (3) -> 1 }
+
+# 3. Relaciones (predicados)
+[relaciones]
+P/1 = { 1, 2 }
+R/2 = { (1, 2), (2, 3), (3, 1) }
+
+# 4. Entorno para variables libres
+[entorno]
+x = 1
+y = 2
+
+# 5. Fórmulas a evaluar (una por línea)
+[formulas]
+∀x ∃y R(x, y)
+∀x (P(x) -> ∃y R(x, y))
+∀x ∀y (P(x) -> R(x, y))
+R(x, s(x))
+P(i) ∧ ¬P(s(s(i)))
