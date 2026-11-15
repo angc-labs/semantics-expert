@@ -2,8 +2,7 @@
 
 import type { Interpretacion } from "./tipos";
 
-// estas letras se usan para el atajo e x (existe)
-export const NOMBRES_RESERVADOS = ["E"];
+export const NOMBRES_RESERVADOS: string[] = [];
 
 // un nombre empieza con letra y despues puede llevar letras, numeros o _
 const PATRON_NOMBRE = /^[A-Za-z][A-Za-z0-9_]*$/;
@@ -25,7 +24,7 @@ export function revisarNombre(
     return "El nombre debe empezar con una letra y solo llevar letras, números o _.";
   }
   if (NOMBRES_RESERVADOS.includes(n)) {
-    return "E está reservada para el atajo E x (∃x).";
+    return `${n} es un nombre reservado.`;
   }
 
   if (tipo === "funcion") {

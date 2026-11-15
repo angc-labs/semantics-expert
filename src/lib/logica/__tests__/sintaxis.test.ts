@@ -21,7 +21,7 @@ describe("analizarFormula: precedencia y asociatividad", () => {
     expect(leer("par(c) → par(c) ↔ par(c)")).toBe("(par(c) → par(c)) ↔ par(c)");
   });
   it("→ agrupa a la derecha", () => {
-    expect(leer("par(c) -> par(c) -> par(c)")).toBe("par(c) → (par(c) → par(c))");
+    expect(leer("par(c) → par(c) → par(c)")).toBe("par(c) → (par(c) → par(c))");
   });
   it("∧ y ∨ agrupan a la izquierda", () => {
     expect(leer("par(c) ∧ par(c) ∧ par(c)")).toBe("(par(c) ∧ par(c)) ∧ par(c)");
@@ -32,7 +32,7 @@ describe("analizarFormula: precedencia y asociatividad", () => {
   });
   it("lee terminos con funciones y constantes", () => {
     expect(leer("menor(s(c), x)")).toBe("menor(s(c), x)");
-    expect(leer("E x menor(x, c)")).toBe("∃x menor(x, c)");
+    expect(leer("∃x menor(x, c)")).toBe("∃x menor(x, c)");
   });
 });
 

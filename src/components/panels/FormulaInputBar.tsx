@@ -2,7 +2,6 @@
 
 import React, { useState, useRef, useMemo, useEffect } from "react";
 import { useSemanticsStore, type ActiveMode } from "@/store/useSemanticsStore";
-import { normalizarAtajos } from "@/lib/logica/atajos";
 import { analizarArchivoAdjunto } from "@/lib/logica/archivo";
 import { revisarInterpretacion } from "@/lib/logica/interpretacion";
 import MenuDropdown, { type MenuItem } from "./MenuDropdown";
@@ -344,7 +343,7 @@ export default function FormulaInputBar() {
       if (formula) evaluateFormula(formula);
       return;
     }
-    const trimmed = normalizarAtajos(rawTrimmed);
+    const trimmed = rawTrimmed;
 
     if (activeMode === "formula") {
       evaluateFormula(trimmed);
@@ -472,11 +471,9 @@ export default function FormulaInputBar() {
               value={input}
               onChange={(e) => {
                 const rawVal = e.target.value;
-                const norm = normalizarAtajos(rawVal);
-                setInput(norm);
+                setInput(rawVal);
                 const pos = e.target.selectionStart ?? rawVal.length;
-                const diff = norm.length - rawVal.length;
-                setCursorPos(Math.max(0, pos + diff));
+                setCursorPos(pos);
                 setSelectedIndex(0);
                 setDismissedAt(null);
               }}
@@ -485,7 +482,7 @@ export default function FormulaInputBar() {
               onKeyUp={(e) => setCursorPos(e.currentTarget.selectionStart ?? 0)}
               placeholder={
                 activeMode === "formula"
-                  ? "escribe la formula con botones o atajos (->, <->, E x) y enter..."
+                  ? "escribe la formula con botones o simbolos (@) y enter..."
                   : "escribe / para abrir un editor o @ para simbolos logicos..."
               }
               className="flex-1 resize-none outline-none bg-transparent placeholder:text-neutral-600 text-sm leading-normal py-1"

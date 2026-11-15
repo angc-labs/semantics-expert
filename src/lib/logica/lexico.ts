@@ -2,7 +2,6 @@
 // convierte el texto escrito por el usuario en una lista de piezas (tokens)
 // no revisa si la formula tiene sentido, eso lo hace sintaxis.ts
 
-import { normalizarAtajos } from "./atajos";
 import type { ErrorLogico } from "./errores";
 
 export type TipoToken =
@@ -21,9 +20,8 @@ export type TipoToken =
 
 export interface Token {
   tipo: TipoToken;
-  // texto tal como quedo despues de normalizar atajos
   texto: string;
-  // posicion (desde 0) dentro del texto normalizado
+  // posicion (desde 0) dentro del texto
   posicion: number;
 }
 
@@ -48,7 +46,7 @@ const ES_PARTE_NOMBRE = /[A-Za-z0-9_]/;
 export function tokenizar(
   entrada: string
 ): { tokens: Token[]; texto: string; errores: ErrorLogico[] } {
-  const texto = normalizarAtajos(entrada);
+  const texto = entrada;
   const tokens: Token[] = [];
   const errores: ErrorLogico[] = [];
   let i = 0;

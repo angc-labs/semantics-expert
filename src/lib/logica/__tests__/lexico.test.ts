@@ -10,12 +10,6 @@ describe("tokenizar", () => {
       "conjuncion", "negacion", "nombre", "cierra", "fin",
     ]);
   });
-  it("aplica los atajos de teclado", () => {
-    const { tokens } = tokenizar("E x p(x) -> q <-> r");
-    expect(tokens.map((t) => t.tipo)).toContain("existencial");
-    expect(tokens.map((t) => t.tipo)).toContain("implicacion");
-    expect(tokens.map((t) => t.tipo)).toContain("bicondicional");
-  });
   it("reporta caracteres invalidos", () => {
     const { errores } = tokenizar("p $ q");
     expect(errores).toHaveLength(1);

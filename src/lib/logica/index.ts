@@ -13,7 +13,6 @@
 
 export * from "./tipos";
 export * from "./errores";
-export * from "./atajos";
 export * from "./nombres";
 export * from "./lexico";
 export * from "./sintaxis";
@@ -21,4 +20,3 @@ export * from "./formulas";
 export * from "./interpretacion";
 export * from "./semantica";
 export * from "./evaluador";
-export * from "./ejemplos";

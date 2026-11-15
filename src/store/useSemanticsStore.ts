@@ -6,7 +6,6 @@ import { persist } from "zustand/middleware";
 import type { FunctionDef, RelationDef } from "@/lib/logica/tipos";
 import { ajustarAlDominio } from "@/lib/logica/interpretacion";
 import { evaluar, type ResultadoEvaluacion } from "@/lib/logica/evaluador";
-import { buscarEjemplo } from "@/lib/logica/ejemplos";
 import type { DatosArchivo } from "@/lib/logica/archivo";
 import type { EstadoPunto } from "@/components/StatusIndicator";
 
@@ -175,8 +174,6 @@ interface SemanticsStore {
 
   // evalua una formula con la interpretacion actual y la agrega al historial
   evaluateFormula: (texto: string) => void;
-  // reemplaza la interpretacion por un ejemplo de las presentaciones y evalua sus formulas
-  loadExample: (id: string) => void;
   // importa dominio, funciones, relaciones, entorno y formulas desde un archivo .txt o .toml
   importFromFile: (datos: DatosArchivo) => void;
 
@@ -424,27 +421,6 @@ export const useSemanticsStore = create<SemanticsStore>()(
             logs: [...state.logs, `evaluar formula: ${texto}`],
           })
         ),
-
-      loadExample: (id) =>
-        set((state) => {
-          const ejemplo = buscarEjemplo(id);
-          if (!ejemplo) return {};
-          const { interpretacion: interp, entorno, formulas } = ejemplo;
-          const base = {
-            domain: interp.dominio,
-            functions: interp.funciones,
-            relations: interp.relaciones,
-            environment: entorno,
-          };
-          return sincronizarActivo(state, {
-            ...base,
-            formula: formulas[0],
-            evaluationHistory: formulas.map((f) => crearEvaluacion(f, base)),
-            logs: [`ejemplo cargado: ${ejemplo.titulo} (${ejemplo.fuente})`],
-            activeMode: null,
-            editingName: null,
-          });
-        }),
 
       importFromFile: (datos) =>
         set((state) => {

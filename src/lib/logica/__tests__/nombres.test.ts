@@ -6,10 +6,9 @@ describe("revisarNombre", () => {
   it("acepta un nombre libre", () => {
     expect(revisarNombre("g", "funcion", INTERP)).toBeNull();
   });
-  it("rechaza vacio, mal formado y reservado", () => {
+  it("rechaza vacio y mal formado", () => {
     expect(revisarNombre("  ", "funcion", INTERP)).not.toBeNull();
     expect(revisarNombre("1a", "relacion", INTERP)).not.toBeNull();
-    expect(revisarNombre("E", "variable", INTERP)).not.toBeNull();
   });
   it("rechaza choques entre tipos de simbolo", () => {
     expect(revisarNombre("par", "funcion", INTERP)).not.toBeNull();
