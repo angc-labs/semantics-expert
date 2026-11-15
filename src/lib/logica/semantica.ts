@@ -20,6 +20,9 @@ export interface Explicacion {
   // elemento elegido para el testigo o contraejemplo
   elemento?: string;
   justificacion?: TipoJustificacion;
+  // en cuantificadores: la variable y el elemento de D con el que se evaluo cada hijo
+  variable?: string;
+  elementos?: string[];
   // pasos mas pequenos que sostienen este
   hijos: Explicacion[];
 }
@@ -103,6 +106,8 @@ export function evaluarFormula(f: Formula, interp: Interpretacion, entorno: Ento
             valor: true,
             razon: `testigo: con ${x} = ${testigo.elemento} se cumple`,
             elemento: testigo.elemento,
+            variable: x,
+            elementos: [testigo.elemento],
             justificacion: "testigo",
             hijos: [testigo.explicacion],
           };
@@ -111,6 +116,8 @@ export function evaluarFormula(f: Formula, interp: Interpretacion, entorno: Ento
           formula: texto,
           valor: false,
           razon: `ningún elemento de D cumple (se revisaron ${instancias.length})`,
+          variable: x,
+          elementos: instancias.map((i) => i.elemento),
           justificacion: "completa",
           hijos: instancias.map((i) => i.explicacion),
         };
@@ -123,6 +130,8 @@ export function evaluarFormula(f: Formula, interp: Interpretacion, entorno: Ento
           valor: false,
           razon: `contraejemplo: con ${x} = ${contra.elemento} no se cumple`,
           elemento: contra.elemento,
+          variable: x,
+          elementos: [contra.elemento],
           justificacion: "contraejemplo",
           hijos: [contra.explicacion],
         };
@@ -131,6 +140,8 @@ export function evaluarFormula(f: Formula, interp: Interpretacion, entorno: Ento
         formula: texto,
         valor: true,
         razon: `todos los elementos de D cumplen (se revisaron ${instancias.length})`,
+        variable: x,
+        elementos: instancias.map((i) => i.elemento),
         justificacion: "completa",
         hijos: instancias.map((i) => i.explicacion),
       };
