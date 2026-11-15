@@ -177,7 +177,7 @@ export default function RelationPanel() {
       return;
     }
     if (relSelectedTuples.size === 0) {
-      setRelTupleError("no se admiten relaciones vacias");
+      setRelTupleError("no se admiten predicados vacios");
       return;
     }
 
@@ -200,7 +200,7 @@ export default function RelationPanel() {
     >
       <div className="flex items-center justify-between text-xs">
         <span className="bg-neutral-900 text-white px-2.5 py-0.5 rounded-full font-semibold">
-          /relacion · predicado P^I ⊆ d^n (no vacio)
+          /predicado · predicado P^I ⊆ d^n (no vacio)
         </span>
         <button
           type="button"
@@ -468,7 +468,7 @@ export default function RelationPanel() {
 
       <div className="flex items-center justify-between text-xs text-neutral-700">
         <span>
-          seleccionadas: {relSelectedTuples.size} tupla(s) (no se admiten relaciones vacias)
+          seleccionadas: {relSelectedTuples.size} tupla(s) (no se admiten predicados vacios)
         </span>
         <button
           type="button"
@@ -476,7 +476,7 @@ export default function RelationPanel() {
           disabled={!relName.trim() || relSelectedTuples.size === 0}
           className="bg-neutral-900 text-white px-4 py-1.5 rounded-full font-semibold disabled:opacity-40 cursor-pointer"
         >
-          guardar relacion
+          guardar predicado
         </button>
       </div>
     </div>

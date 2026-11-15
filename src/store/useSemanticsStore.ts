@@ -14,6 +14,7 @@ export type ActiveMode =
   | "dominio"
   | "constante"
   | "funcion"
+  | "predicado"
   | "relacion"
   | "entorno"
   | "variable"

@@ -108,12 +108,12 @@ const COMMAND_ITEMS: MenuItem[] = [
     aliases: ["funcion", "function", "func", "f"],
   },
   {
-    id: "relacion",
+    id: "predicado",
     trigger: "/",
-    label: "/relacion",
-    mode: "relacion",
-    description: "crea una relacion o predicado y elige sus tuplas",
-    aliases: ["relacion", "predicado", "relation", "predicate", "rel", "p"],
+    label: "/predicado",
+    mode: "predicado",
+    description: "crea un predicado y elige sus tuplas",
+    aliases: ["predicado", "relacion", "predicate", "relation", "rel", "p"],
   },
   {
     id: "variable",
@@ -448,7 +448,7 @@ export default function FormulaInputBar() {
             </div>
 
             <div className="flex items-center gap-0.5 text-xs flex-wrap">
-              {(["dominio", "constante", "funcion", "relacion", "variable", "entorno"] as ActiveMode[]).map(
+              {(["dominio", "constante", "funcion", "predicado", "variable", "entorno"] as ActiveMode[]).map(
                 (m) => (
                   <button
                     key={m}
@@ -570,7 +570,7 @@ export default function FormulaInputBar() {
             <button
               type="button"
               onClick={() => archivoRef.current?.click()}
-              title="adjuntar .txt o .toml (dominio, relaciones, funciones, entorno y fórmulas)"
+              title="adjuntar .txt o .toml (dominio, predicados, funciones, entorno y fórmulas)"
               aria-label="adjuntar archivo"
               className="group ml-2 inline-flex h-6 w-6 items-center justify-center rounded-full border border-neutral-400 bg-white text-neutral-800 shadow-sm transition-all duration-200 ease-out hover:-translate-y-0.5 hover:scale-110 hover:border-neutral-900 hover:bg-neutral-900 hover:text-white hover:shadow-[0_6px_16px_rgba(0,0,0,0.18)] active:translate-y-0 active:scale-90 cursor-pointer"
             >
