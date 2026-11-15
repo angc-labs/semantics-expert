@@ -3,7 +3,7 @@
 import React, { useState, useRef, useMemo, useEffect } from "react";
 import { useSemanticsStore, type ActiveMode } from "@/store/useSemanticsStore";
 import { normalizarAtajos } from "@/lib/logica/atajos";
-import { analizarArchivoAdjunto } from "@/lib/logica/archivo";
+import { analizarArchivoAdjunto, erroresDeImportacion } from "@/lib/logica/archivo";
 import { revisarInterpretacion } from "@/lib/logica/interpretacion";
 import MenuDropdown, { type MenuItem } from "./MenuDropdown";
 import VisualBuilder from "./VisualBuilder";
@@ -237,13 +237,27 @@ export default function FormulaInputBar() {
     const texto = await archivo.text();
     const datos = analizarArchivoAdjunto(texto);
     const totalDefs =
-      (datos.dominio ? 1 : 0) +
+      (datos.dominio !== undefined ? 1 : 0) +
       Object.keys(datos.funciones).length +
       Object.keys(datos.relaciones).length +
       Object.keys(datos.entorno).length;
-    if (totalDefs === 0 && datos.formulas.length === 0) {
+    if (datos.errores.length > 0) {
+      setAvisoArchivo(`${archivo.name}: importación rechazada — ${datos.errores.join(" | ")}`);
+    } else if (totalDefs === 0 && datos.formulas.length === 0) {
       setAvisoArchivo(`${archivo.name}: archivo vacío`);
     } else {
+      if (totalDefs > 0) {
+        const errores = erroresDeImportacion(
+          datos,
+          { dominio: domain, funciones: functions, relaciones: relations },
+          environment
+        );
+        if (errores.length > 0) {
+          setAvisoArchivo(`${archivo.name}: importación rechazada — ${errores.join(" | ")}`);
+          setTimeout(() => setAvisoArchivo(null), 7000);
+          return;
+        }
+      }
       importFromFile(datos);
       const partes: string[] = [];
       if (totalDefs > 0) partes.push("interpretación cargada");
@@ -354,6 +368,11 @@ export default function FormulaInputBar() {
   };
 
   const handleEvaluateOrSubmit = () => {
+    if (!interpretacionValida) {
+      setAvisoArchivo("corrige la interpretación antes de evaluar una fórmula");
+      setTimeout(() => setAvisoArchivo(null), 4000);
+      return;
+    }
     const rawTrimmed = input.trim();
     if (!rawTrimmed) {
       if (formula) evaluateFormula(formula);
@@ -509,7 +528,7 @@ export default function FormulaInputBar() {
             <button
               type="button"
               onClick={handleEvaluateOrSubmit}
-              disabled={!input.trim() && !formula}
+              disabled={(!input.trim() && !formula) || !interpretacionValida}
               title="evaluar formula (enter)"
               aria-label="evaluar formula"
               className="shrink-0 flex h-8 w-8 items-center justify-center rounded-full bg-neutral-900 text-white shadow-sm transition-all hover:bg-neutral-800 hover:scale-105 active:scale-95 disabled:opacity-20 disabled:pointer-events-none disabled:scale-100 cursor-pointer"

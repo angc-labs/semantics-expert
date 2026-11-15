@@ -79,6 +79,8 @@ export interface Comprobacion {
 
 const MAX_DETALLES = 4;
 
+const PATRON_NOMBRE = /^[A-Za-z][A-Za-z0-9_]*$/;
+
 function resumir(lista: string[]): string {
   if (lista.length <= MAX_DETALLES) return lista.join("; ");
   return `${lista.slice(0, MAX_DETALLES).join("; ")}; y ${lista.length - MAX_DETALLES} más`;
@@ -108,8 +110,28 @@ export function revisarInterpretacion(interp: Interpretacion, entorno: Entorno):
   // 2. cada funcion debe dar un valor de d para cada tupla de d^n (funcion total)
   for (const fn of Object.values(funciones)) {
     const problemas: string[] = [];
-    for (const tupla of productoCartesiano(dominio, fn.arity)) {
-      const valor = fn.mapping[tupla.join(",")];
+    const aridadValida = Number.isInteger(fn.arity) && fn.arity >= 0;
+    if (!aridadValida) {
+      problemas.push("la aridad debe ser un entero mayor o igual que 0");
+    }
+    if (fn.name !== undefined && !PATRON_NOMBRE.test(fn.name)) {
+      problemas.push("el nombre no cumple el formato de símbolo");
+    }
+    const mapping = fn.mapping && typeof fn.mapping === "object" ? fn.mapping : {};
+    const clavesVistas = new Set<string>();
+    for (const [clave, valor] of Object.entries(mapping)) {
+      const argumentos = clave === "" ? [] : clave.split(",");
+      if (aridadValida && argumentos.length !== fn.arity) {
+        problemas.push(`${fn.name} tiene la clave (${clave}) con ${argumentos.length} argumento(s), no ${fn.arity}`);
+      } else if (aridadValida && argumentos.some((e) => !enD(e) || e === "")) {
+        problemas.push(`${fn.name} usa una entrada fuera de D en (${clave})`);
+      }
+      if (clavesVistas.has(clave)) problemas.push(`${fn.name} repite la entrada (${clave})`);
+      clavesVistas.add(clave);
+      if (valor === "") problemas.push(`falta el valor de ${textoAplicacion(fn.name, argumentos)}`);
+    }
+    for (const tupla of aridadValida ? productoCartesiano(dominio, fn.arity) : []) {
+      const valor = mapping[tupla.join(",")];
       const app = textoAplicacion(fn.name, tupla);
       if (valor === undefined || valor === "") problemas.push(`falta ${app}`);
       else if (!enD(valor)) problemas.push(`${app} = ${valor} no está en D`);
@@ -129,10 +151,28 @@ export function revisarInterpretacion(interp: Interpretacion, entorno: Entorno):
   // 3. cada relacion debe ser un subconjunto no vacio de d^n
   for (const rel of Object.values(relaciones)) {
     const problemas: string[] = [];
-    if (rel.tuples.length === 0) problemas.push("no tiene tuplas (no se admiten relaciones vacías)");
-    for (const t of rel.tuples) {
-      if (t.length !== rel.arity) problemas.push(`${textoTupla(t)} no tiene ${rel.arity} elemento(s)`);
-      else if (!t.every(enD)) problemas.push(`${textoTupla(t)} usa elementos fuera de D`);
+    const aridadValida = Number.isInteger(rel.arity) && rel.arity >= 0;
+    const tuplas = Array.isArray(rel.tuples) ? rel.tuples : [];
+    if (!aridadValida) problemas.push("la aridad debe ser un entero mayor o igual que 0");
+    if (rel.name !== undefined && !PATRON_NOMBRE.test(rel.name)) {
+      problemas.push("el nombre no cumple el formato de símbolo");
+    }
+    if (tuplas.length === 0) problemas.push("no tiene tuplas (no se admiten relaciones vacías)");
+    const clavesVistas = new Set<string>();
+    for (const t of tuplas) {
+      const etiqueta = Array.isArray(t) ? textoTupla(t) : "<tupla inválida>";
+      const clave = Array.isArray(t) ? t.join(",") : "<inválida>";
+      if (clavesVistas.has(clave)) problemas.push(`${etiqueta} está repetida`);
+      clavesVistas.add(clave);
+      if (!Array.isArray(t)) {
+        problemas.push("hay una tupla con formato inválido");
+      } else if (!aridadValida || t.length !== rel.arity) {
+        problemas.push(`${etiqueta} no tiene ${rel.arity} elemento(s)`);
+      }
+      if (Array.isArray(t) && t.some((e) => e === "")) problemas.push(`${etiqueta} contiene elementos vacíos`);
+      if (Array.isArray(t) && t.every((e) => e !== "") && !t.every(enD)) {
+        problemas.push(`${etiqueta} usa elementos fuera de D`);
+      }
     }
     lista.push({
       id: `r:${rel.name}`,
@@ -150,6 +190,7 @@ export function revisarInterpretacion(interp: Interpretacion, entorno: Entorno):
   }
   for (const nombre of [...Object.keys(funciones), ...Object.keys(relaciones)]) {
     if (NOMBRES_RESERVADOS.includes(nombre)) choques.push(`${nombre} está reservado`);
+    if (!PATRON_NOMBRE.test(nombre)) choques.push(`${nombre} no es un nombre válido`);
   }
   if (choques.length > 0) {
     lista.push({
@@ -164,7 +205,8 @@ export function revisarInterpretacion(interp: Interpretacion, entorno: Entorno):
   // 5. cada variable del entorno debe apuntar a un elemento de d y no chocar con otro simbolo
   for (const [variable, valor] of Object.entries(entorno)) {
     let detalle: string | undefined;
-    if (!enD(valor)) detalle = `${valor} no está en D.`;
+    if (!PATRON_NOMBRE.test(variable)) detalle = `${variable} no es un nombre válido de variable.`;
+    else if (!valor || !enD(valor)) detalle = `${valor} no está en D.`;
     else if (funciones[variable] || relaciones[variable]) {
       detalle = `${variable} ya es el nombre de otro símbolo.`;
     } else if (NOMBRES_RESERVADOS.includes(variable)) {

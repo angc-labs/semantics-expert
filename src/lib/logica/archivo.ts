@@ -1,7 +1,8 @@
 // lector de archivos .txt o .toml para cargar dominio, funciones, relaciones, entorno y formulas
 
-import type { FunctionDef, RelationDef } from "./tipos";
+import type { FunctionDef, RelationDef, Interpretacion } from "./tipos";
 import { normalizarAtajos } from "./atajos";
+import { revisarInterpretacion } from "./interpretacion";
 
 export interface DatosArchivo {
   dominio?: string[];
@@ -9,6 +10,31 @@ export interface DatosArchivo {
   relaciones: Record<string, RelationDef>;
   entorno: Record<string, string>;
   formulas: string[];
+  errores: string[];
+}
+
+// Valida la interpretación resultante antes de incorporarla al notebook.
+// Las fórmulas no se validan aquí porque requieren el lenguaje completo y el entorno.
+export function erroresDeImportacion(
+  datos: DatosArchivo,
+  base: Interpretacion,
+  entornoBase: Record<string, string>
+): string[] {
+  const interpretacion: Interpretacion = {
+    dominio: datos.dominio !== undefined ? datos.dominio : base.dominio,
+    funciones: datos.dominio !== undefined || Object.keys(datos.funciones).length > 0
+      ? { ...base.funciones, ...datos.funciones }
+      : base.funciones,
+    relaciones: datos.dominio !== undefined || Object.keys(datos.relaciones).length > 0
+      ? { ...base.relaciones, ...datos.relaciones }
+      : base.relaciones,
+  };
+  const entorno = datos.dominio !== undefined || Object.keys(datos.entorno).length > 0
+    ? { ...entornoBase, ...datos.entorno }
+    : entornoBase;
+  return revisarInterpretacion(interpretacion, entorno)
+    .filter((comprobacion) => !comprobacion.ok)
+    .map((comprobacion) => `${comprobacion.titulo}: ${comprobacion.detalle ?? "entrada inválida"}`);
 }
 
 function limpiarComillas(s: string): string {
@@ -114,6 +140,7 @@ export function analizarArchivoAdjunto(contenido: string): DatosArchivo {
     relaciones: {},
     entorno: {},
     formulas: [],
+    errores: [],
   };
 
   let seccion: "ninguna" | "dominio" | "funciones" | "relaciones" | "entorno" | "formulas" = "ninguna";
@@ -160,7 +187,10 @@ export function analizarArchivoAdjunto(contenido: string): DatosArchivo {
       lineas.push(t);
     }
   }
-  if (acumulada) lineas.push(acumulada);
+  if (acumulada) {
+    lineas.push(acumulada);
+    res.errores.push("hay una lista o bloque sin cerrar");
+  }
 
   for (const l of lineas) {
     // cabeceras TOML: [dominio], [relaciones], [funciones], [entorno], [formulas]
@@ -179,7 +209,7 @@ export function analizarArchivoAdjunto(contenido: string): DatosArchivo {
     const mDominio = /^(?:\/?dominio|domain|D)\s*(?:=|:)\s*(.+)$/i.exec(l);
     if (mDominio) {
       const elems = leerListaSimple(mDominio[1]);
-      if (elems.length > 0) res.dominio = elems;
+      res.dominio = elems;
       continue;
     }
 
@@ -308,6 +338,10 @@ export function analizarArchivoAdjunto(contenido: string): DatosArchivo {
     }
 
     // por defecto la linea es una formula a evaluar
+    if (/^[A-Za-z_][A-Za-z0-9_]*(?:\/[^=\s]+)?\s*=/.test(l)) {
+      res.errores.push(`línea no reconocida o definición incompleta: ${l}`);
+      continue;
+    }
     res.formulas.push(normalizarAtajos(limpiarComillas(l)));
   }
 
