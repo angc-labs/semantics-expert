@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import StatusIndicator from "@/components/StatusIndicator";
 import SyntaxTree from "@/components/panels/SyntaxTree";
@@ -49,11 +49,14 @@ export default function ResolutionModal({
   numero: number;
   onClose: () => void;
 }) {
+  const dialogRef = useRef<HTMLDivElement | null>(null);
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     window.addEventListener("keydown", onKey);
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
+    dialogRef.current?.focus();
     return () => {
       window.removeEventListener("keydown", onKey);
       document.body.style.overflow = prev;
@@ -73,8 +76,11 @@ export default function ResolutionModal({
       onClick={onClose}
       role="dialog"
       aria-modal="true"
+      aria-labelledby="resolution-title"
     >
       <div
+        ref={dialogRef}
+        tabIndex={-1}
         className="panel-in relative flex h-[88vh] w-full max-w-6xl flex-col overflow-hidden rounded-[28px] bg-white shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
@@ -83,7 +89,7 @@ export default function ResolutionModal({
             <div className="text-[11px] text-neutral-600">
               formula #{numero} · {item.timestamp}
             </div>
-            <div style={{ fontFamily: FUENTE_CLASICA }} className="text-xl text-neutral-900 break-words">{item.formula}</div>
+            <div id="resolution-title" style={{ fontFamily: FUENTE_CLASICA }} className="text-xl text-neutral-900 break-words">{item.formula}</div>
           </div>
           <button
             type="button"
