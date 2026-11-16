@@ -20,11 +20,11 @@ export const metadata: Metadata = {
   description: "Evaluador semántico de lógica de primer orden",
   icons: {
     icon: [
-      { url: "/icon.png", type: "image/png" },
+      { url: "/icon.png", type: "image/png", sizes: "32x32" },
       { url: "/favicon.ico", sizes: "any" },
     ],
-    shortcut: "/icon.png",
-    apple: "/icon.png",
+    shortcut: "/favicon.ico",
+    apple: "/apple-icon.png",
   },
 };
 
