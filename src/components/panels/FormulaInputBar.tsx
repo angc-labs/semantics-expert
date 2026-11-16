@@ -9,6 +9,7 @@ import MenuDropdown, { type MenuItem } from "./MenuDropdown";
 import VisualBuilder from "./VisualBuilder";
 import ShortcutsFooter from "./ShortcutsFooter";
 import VoiceInputControls from "./VoiceInputControls";
+import { EJEMPLOS } from "@/lib/logica/ejemplos";
 
 const SYMBOL_ITEMS: MenuItem[] = [
   {
@@ -219,6 +220,7 @@ export default function FormulaInputBar() {
   const evaluateFormula = useSemanticsStore((s) => s.evaluateFormula);
   const importFromFile = useSemanticsStore((s) => s.importFromFile);
   const resetAll = useSemanticsStore((s) => s.resetAll);
+  const loadExample = useSemanticsStore((s) => s.loadExample);
 
   const [input, setInput] = useState("");
   const [cursorPos, setCursorPos] = useState(0);
@@ -226,6 +228,7 @@ export default function FormulaInputBar() {
   const [dismissedAt, setDismissedAt] = useState<number | null>(null);
   const [modoEntrada, setModoEntrada] = useState<"texto" | "visual">("texto");
   const [selectorAbierto, setSelectorAbierto] = useState(false);
+  const [ejemplosAbiertos, setEjemplosAbiertos] = useState(false);
   const [copiedShortcut, setCopiedShortcut] = useState<string | null>(null);
 
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -600,6 +603,36 @@ export default function FormulaInputBar() {
                     >
                       {m === "texto" ? "Texto" : "Visual"}
                       {modoEntrada === m && <span>✓</span>}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className="relative z-40 ml-2">
+              <button
+                type="button"
+                onClick={() => setEjemplosAbiertos((abierto) => !abierto)}
+                aria-expanded={ejemplosAbiertos}
+                className="rounded-full border border-neutral-400 bg-white px-2.5 py-1 text-xs font-medium text-neutral-800 transition-colors hover:bg-neutral-900 hover:text-white"
+              >
+                ejemplos
+              </button>
+              {ejemplosAbiertos && (
+                <div className="panel-in absolute bottom-full left-0 z-40 mb-1.5 w-64 overflow-hidden rounded-xl border border-neutral-400 bg-white p-1 text-xs shadow-xl">
+                  {EJEMPLOS.map((ejemplo) => (
+                    <button
+                      key={ejemplo.id}
+                      type="button"
+                      onClick={() => {
+                        loadExample(ejemplo.id);
+                        setEjemplosAbiertos(false);
+                        setInput("");
+                        setCursorPos(0);
+                      }}
+                      className="flex w-full flex-col rounded-lg px-2.5 py-2 text-left transition-colors hover:bg-neutral-900 hover:text-white"
+                    >
+                      <span className="font-semibold">{ejemplo.titulo}</span>
+                      <span className="text-[11px] text-neutral-600 group-hover:text-neutral-300">{ejemplo.formulas.length} fórmulas preparadas</span>
                     </button>
                   ))}
                 </div>

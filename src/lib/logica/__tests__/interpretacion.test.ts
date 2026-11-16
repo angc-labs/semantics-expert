@@ -5,6 +5,7 @@ import {
   textoTupla,
   ajustarAlDominio,
   revisarInterpretacion,
+  advertenciasRendimiento,
 } from "../interpretacion";
 import { INTERP } from "./ayuda";
 
@@ -93,5 +94,13 @@ describe("revisarInterpretacion", () => {
     };
     expect(revisarInterpretacion(mala, {}).find((c) => c.id === "nombres")?.ok).toBe(false);
     expect(revisarInterpretacion(mala, {}).find((c) => c.id === "r:p")?.ok).toBe(false);
+  });
+  it("advierte sobre tablas grandes sin invalidar la interpretación", () => {
+    const interp = {
+      dominio: Array.from({ length: 11 }, (_, i) => String(i)),
+      funciones: { f: { name: "f", arity: 5, mapping: {} } },
+      relaciones: {},
+    };
+    expect(advertenciasRendimiento(interp).length).toBeGreaterThan(0);
   });
 });

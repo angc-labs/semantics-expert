@@ -78,12 +78,45 @@ export interface Comprobacion {
 }
 
 const MAX_DETALLES = 4;
+const LIMITE_ADVERTENCIA_COMBINACIONES = 10_000;
 
 const PATRON_NOMBRE = /^[A-Za-z][A-Za-z0-9_]*$/;
 
 function resumir(lista: string[]): string {
   if (lista.length <= MAX_DETALLES) return lista.join("; ");
   return `${lista.slice(0, MAX_DETALLES).join("; ")}; y ${lista.length - MAX_DETALLES} más`;
+}
+
+function potenciaAcotada(base: number, exponente: number, limite: number): number {
+  let resultado = 1;
+  for (let i = 0; i < exponente; i++) {
+    resultado *= base;
+    if (resultado > limite) return resultado;
+  }
+  return resultado;
+}
+
+// Estima el costo de las tablas sin construir el producto cartesiano.
+// Una advertencia de rendimiento no invalida la interpretación.
+export function advertenciasRendimiento(interp: Interpretacion): string[] {
+  const advertencias: string[] = [];
+  const tamanoDominio = interp.dominio.length;
+  for (const fn of Object.values(interp.funciones)) {
+    const combinaciones = potenciaAcotada(tamanoDominio, Math.max(0, fn.arity), LIMITE_ADVERTENCIA_COMBINACIONES);
+    if (combinaciones > LIMITE_ADVERTENCIA_COMBINACIONES) {
+      advertencias.push(`${fn.name} requiere revisar ${tamanoDominio}^${fn.arity} combinaciones; la validación puede tardar.`);
+    }
+  }
+  for (const rel of Object.values(interp.relaciones)) {
+    const combinaciones = potenciaAcotada(tamanoDominio, Math.max(0, rel.arity), LIMITE_ADVERTENCIA_COMBINACIONES);
+    if (combinaciones > LIMITE_ADVERTENCIA_COMBINACIONES) {
+      advertencias.push(`${rel.name} tiene un universo D^${rel.arity} grande; la revisión de tuplas puede tardar.`);
+    }
+  }
+  if (tamanoDominio > 25) {
+    advertencias.push("Los cuantificadores revisarán muchos elementos de D; las comprobaciones completas pueden tardar.");
+  }
+  return advertencias;
 }
 
 // revisa toda la interpretacion y el entorno segun las reglas del proyecto

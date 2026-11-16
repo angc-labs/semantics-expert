@@ -336,6 +336,7 @@ function Constructor({ initialFormula, onClose }: { initialFormula?: string; onC
   const environment = useSemanticsStore((s) => s.environment);
   const storeFormula = useSemanticsStore((s) => s.formula);
   const evaluateFormula = useSemanticsStore((s) => s.evaluateFormula);
+  const setFormula = useSemanticsStore((s) => s.setFormula);
   const { screenToFlowPosition } = useReactFlow();
 
   const grafoInicial = useMemo(() => {
@@ -353,6 +354,7 @@ function Constructor({ initialFormula, onClose }: { initialFormula?: string; onC
   const [contador, setContador] = useState(grafoInicial.siguienteId);
   const [entrada, setEntrada] = useState("");
   const [errorEntrada, setErrorEntrada] = useState(false);
+  const [errorConexion, setErrorConexion] = useState<string | null>(null);
   const [sel, setSel] = useState(0);
 
   // menu @: se abre cuando lo escrito empieza con @
@@ -647,18 +649,46 @@ function Constructor({ initialFormula, onClose }: { initialFormula?: string; onC
   const onConnect = useCallback(
     (c: Connection) => {
       if (!c.source || !c.target || c.source === c.target) return;
+      const origen = nodos.find((n) => n.id === c.source);
+      const destino = nodos.find((n) => n.id === c.target);
+      if (!origen || !destino) return;
+
+      const claseOrigen = origen.data.clase;
+      const necesitaFormula = claseOrigen === "bin" || claseOrigen === "neg" || claseOrigen === "cuant";
+      const destinoEsFormula = destino.data.clase === "atomo" || destino.data.clase === "bin" || destino.data.clase === "neg" || destino.data.clase === "cuant";
+      const destinoEsTermino = destino.data.clase === "termino";
+
+      if (necesitaFormula && !destinoEsFormula) {
+        setErrorConexion("ese nodo necesita recibir otra fórmula, no un término");
+        return;
+      }
+      if (!necesitaFormula && !destinoEsTermino) {
+        setErrorConexion("ese argumento necesita un término o una variable");
+        return;
+      }
+      if ((claseOrigen === "atomo" || claseOrigen === "termino") && c.sourceHandle?.startsWith("a")) {
+        const posicion = Number(c.sourceHandle.slice(1));
+        if (!Number.isInteger(posicion) || posicion < 0 || posicion >= (origen.data.aridad ?? 0)) {
+          setErrorConexion("esa posición no existe en la aridad del símbolo");
+          return;
+        }
+      }
       setAristas((es) => {
         // evita ciclos: el destino no puede ser ancestro del origen
         const alcanza = (desde: string, meta: string): boolean =>
           desde === meta || es.filter((e) => e.source === desde).some((e) => alcanza(e.target, meta));
-        if (alcanza(c.target!, c.source!)) return es;
+        if (alcanza(c.target!, c.source!)) {
+          setErrorConexion("la conexión formaría un ciclo");
+          return es;
+        }
         const limpias = es.filter(
           (e) => !(e.source === c.source && e.sourceHandle === c.sourceHandle) && e.target !== c.target
         );
+        setErrorConexion(null);
         return addEdge(c, limpias);
       });
     },
-    []
+    [nodos]
   );
 
   const textoFinal = formulaRaiz ? textoFormula(formulaRaiz) : null;
@@ -673,6 +703,7 @@ function Constructor({ initialFormula, onClose }: { initialFormula?: string; onC
           className="relative z-20 flex w-36 shrink-0 flex-col gap-2 border-r border-neutral-400 bg-neutral-50 p-3">
           <div className="relative">
           <input
+            aria-label="agregar elemento al constructor visual"
             value={entrada}
             onChange={(e) => {
               setEntrada(e.target.value);
@@ -774,6 +805,11 @@ function Constructor({ initialFormula, onClose }: { initialFormula?: string; onC
       </div>
       <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-neutral-400 bg-white px-5 py-3">
         <div className="min-w-0">
+          {errorConexion && (
+            <div role="alert" className="mb-2 rounded-lg border border-rose-300 bg-rose-50 px-3 py-1.5 text-xs text-rose-800">
+              {errorConexion}
+            </div>
+          )}
           {textoFinal ? (
             <span className="text-xl">
               {textoFinal}
@@ -813,6 +849,19 @@ function Constructor({ initialFormula, onClose }: { initialFormula?: string; onC
             type="button"
             disabled={!textoFinal}
             onClick={() => {
+              if (textoFinal) {
+                setFormula(textoFinal);
+                onClose();
+              }
+            }}
+            className="rounded-full border border-neutral-900 px-4 py-1.5 text-sm hover:bg-neutral-100 disabled:opacity-30 cursor-pointer"
+          >
+            usar fórmula
+          </button>
+          <button
+            type="button"
+            disabled={!textoFinal}
+            onClick={() => {
               if (textoFinal) evaluateFormula(textoFinal);
               onClose();
             }}
@@ -840,13 +889,14 @@ export default function VisualBuilder({
       onClick={onClose}
       role="dialog"
       aria-modal="true"
+      aria-labelledby="visual-builder-title"
     >
       <div
         className="panel-in flex h-[90vh] w-full max-w-6xl flex-col overflow-hidden rounded-[28px] bg-white shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <header className="flex items-center justify-between border-b border-neutral-400 px-6 py-3">
-          <h2 className="text-2xl" style={{ fontFamily: FUENTE }}>
+          <h2 id="visual-builder-title" className="text-2xl" style={{ fontFamily: FUENTE }}>
             Constructor visual de fórmulas
           </h2>
           <button

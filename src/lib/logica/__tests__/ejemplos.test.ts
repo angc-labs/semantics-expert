@@ -6,6 +6,7 @@ import { evaluar } from "../evaluador";
 const ESPERADOS: Record<string, boolean[]> = {
   predicados: [false, true, false, true],
   constante: [true, true, true, false],
+  defensa: [true, false, true, false],
 };
 
 describe("ejemplos de las presentaciones", () => {

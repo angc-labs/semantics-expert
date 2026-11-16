@@ -48,6 +48,26 @@ export const EJEMPLOS: readonly Ejemplo[] = [
     entorno: {},
     formulas: ["∃y Q(i, y)", "¬R(i)", "∀x ∃y Q(x, y)", "∀x R(x)"],
   },
+  {
+    id: "defensa",
+    titulo: "guion de defensa: testigo y contraejemplo",
+    fuente: "ejemplo preparado para la presentación",
+    interpretacion: {
+      dominio: ["1", "2", "3"],
+      funciones: {},
+      relaciones: {
+        P: rel("P", 1, [["1"], ["2"]]),
+        Q: rel("Q", 1, [["1"]]),
+      },
+    },
+    entorno: {},
+    formulas: [
+      "∃x P(x)",
+      "∀x P(x)",
+      "∀x (P(x) ∨ ¬P(x))",
+      "∃x (Q(x) ∧ ¬Q(x))",
+    ],
+  },
 ];
 
 // para que sirve: buscar un ejemplo por su id
