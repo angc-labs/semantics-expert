@@ -2,14 +2,12 @@
 
 import React, { useState, useRef, useMemo, useEffect } from "react";
 import { useSemanticsStore, type ActiveMode } from "@/store/useSemanticsStore";
-import { normalizarAtajos } from "@/lib/logica/atajos";
 import { analizarArchivoAdjunto, erroresDeImportacion } from "@/lib/logica/archivo";
 import { revisarInterpretacion } from "@/lib/logica/interpretacion";
 import MenuDropdown, { type MenuItem } from "./MenuDropdown";
 import VisualBuilder from "./VisualBuilder";
-import ShortcutsFooter from "./ShortcutsFooter";
-import VoiceInputControls from "./VoiceInputControls";
 import { EJEMPLOS } from "@/lib/logica/ejemplos";
+import { normalizarDictado } from "@/lib/voz";
 
 const SYMBOL_ITEMS: MenuItem[] = [
   {
@@ -112,12 +110,12 @@ const COMMAND_ITEMS: MenuItem[] = [
     aliases: ["funcion", "function", "func", "f"],
   },
   {
-    id: "relacion",
+    id: "predicado",
     trigger: "/",
-    label: "/relacion",
-    mode: "relacion",
-    description: "crea una relacion o predicado y elige sus tuplas",
-    aliases: ["relacion", "predicado", "relation", "predicate", "rel", "p"],
+    label: "/predicado",
+    mode: "predicado",
+    description: "crea un predicado y elige sus tuplas",
+    aliases: ["predicado", "relacion", "predicate", "relation", "rel", "p"],
   },
   {
     id: "variable",
@@ -229,7 +227,11 @@ export default function FormulaInputBar() {
   const [modoEntrada, setModoEntrada] = useState<"texto" | "visual">("texto");
   const [selectorAbierto, setSelectorAbierto] = useState(false);
   const [ejemplosAbiertos, setEjemplosAbiertos] = useState(false);
-  const [copiedShortcut, setCopiedShortcut] = useState<string | null>(null);
+
+  const reconocimientoRef = useRef<any>(null);
+  const [escuchando, setEscuchando] = useState(false);
+  const [estadoVoz, setEstadoVoz] = useState<string | null>(null);
+  const [previoVoz, setPrevioVoz] = useState("");
 
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const archivoRef = useRef<HTMLInputElement | null>(null);
@@ -358,16 +360,67 @@ export default function FormulaInputBar() {
     }
   };
 
-  const copyShortcutToClipboard = async (text: string) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopiedShortcut(text);
-      setTimeout(() => {
-        setCopiedShortcut((prev) => (prev === text ? null : prev));
-      }, 1500);
-    } catch {
-      // si el navegador bloquea el portapapeles no hacemos nada
+  useEffect(() => {
+    return () => reconocimientoRef.current?.abort();
+  }, []);
+
+  const iniciarEscucha = () => {
+    const ventana = typeof window !== "undefined" ? (window as any) : null;
+    const Constructor = ventana?.SpeechRecognition || ventana?.webkitSpeechRecognition;
+    if (!Constructor) {
+      setEstadoVoz("navegador sin soporte de voz");
+      setTimeout(() => setEstadoVoz(null), 3500);
+      return;
     }
+
+    const reconocimiento = new Constructor();
+    reconocimiento.lang = "es-SV";
+    reconocimiento.continuous = false;
+    reconocimiento.interimResults = true;
+    reconocimiento.onresult = (evento: any) => {
+      let provisional = "";
+      for (let i = evento.resultIndex; i < evento.results.length; i++) {
+        const resultado = evento.results[i];
+        if (resultado.length > 0) {
+          if (resultado.isFinal) {
+            const textoNorm = normalizarDictado(resultado[0].transcript);
+            if (textoNorm) {
+              insertAtCursor(`${input && cursorPos > 0 ? " " : ""}${textoNorm}`);
+            }
+          } else {
+            provisional += resultado[0].transcript;
+          }
+        }
+      }
+      setPrevioVoz(provisional);
+    };
+    reconocimiento.onerror = (evento: any) => {
+      setEscuchando(false);
+      setPrevioVoz("");
+      setEstadoVoz(evento?.error === "not-allowed" ? "micrófono denegado" : "no se pudo reconocer la voz");
+      setTimeout(() => setEstadoVoz(null), 3500);
+    };
+    reconocimiento.onend = () => {
+      setEscuchando(false);
+      setPrevioVoz("");
+      setEstadoVoz(null);
+    };
+    reconocimientoRef.current = reconocimiento;
+    setEstadoVoz("escuchando…");
+    setEscuchando(true);
+    reconocimiento.start();
+  };
+
+  const detenerEscucha = () => {
+    reconocimientoRef.current?.stop();
+    setEscuchando(false);
+    setPrevioVoz("");
+    setEstadoVoz(null);
+  };
+
+  const toggleVoz = () => {
+    if (escuchando) detenerEscucha();
+    else iniciarEscucha();
   };
 
   const handleEvaluateOrSubmit = () => {
@@ -381,7 +434,7 @@ export default function FormulaInputBar() {
       if (formula) evaluateFormula(formula);
       return;
     }
-    const trimmed = normalizarAtajos(rawTrimmed);
+    const trimmed = rawTrimmed;
 
     if (activeMode === "formula") {
       evaluateFormula(trimmed);
@@ -486,7 +539,7 @@ export default function FormulaInputBar() {
             </div>
 
             <div className="flex items-center gap-0.5 text-xs flex-wrap">
-              {(["dominio", "constante", "funcion", "relacion", "variable", "entorno"] as ActiveMode[]).map(
+              {(["dominio", "constante", "funcion", "predicado", "variable", "entorno"] as ActiveMode[]).map(
                 (m) => (
                   <button
                     key={m}
@@ -512,11 +565,9 @@ export default function FormulaInputBar() {
               value={input}
               onChange={(e) => {
                 const rawVal = e.target.value;
-                const norm = normalizarAtajos(rawVal);
-                setInput(norm);
+                setInput(rawVal);
                 const pos = e.target.selectionStart ?? rawVal.length;
-                const diff = norm.length - rawVal.length;
-                setCursorPos(Math.max(0, pos + diff));
+                setCursorPos(pos);
                 setSelectedIndex(0);
                 setDismissedAt(null);
               }}
@@ -525,7 +576,7 @@ export default function FormulaInputBar() {
               onKeyUp={(e) => setCursorPos(e.currentTarget.selectionStart ?? 0)}
               placeholder={
                 activeMode === "formula"
-                  ? "escribe la formula con botones o atajos (->, <->, E x) y enter..."
+                  ? "escribe la formula con botones o simbolos (@) y enter..."
                   : "escribe / para abrir un editor o @ para simbolos logicos..."
               }
               className="flex-1 resize-none outline-none bg-transparent placeholder:text-neutral-600 text-sm leading-normal py-1"
@@ -555,30 +606,45 @@ export default function FormulaInputBar() {
             </button>
           </div>
           <span id="formula-ayuda" className="sr-only">
-            Escribe una fórmula, usa los botones, atajos de teclado o el botón de dictado por voz.
+            Escribe una fórmula usando los botones, el teclado o dictado por voz.
           </span>
-          <VoiceInputControls
-            onTranscript={(texto) => {
-              if (!texto) return;
-              insertAtCursor(`${input && cursorPos > 0 ? " " : ""}${texto}`);
-            }}
-          />
           <div className="mt-2 flex flex-wrap items-center pl-1">
             <div className="relative z-40 shrink-0">
               <button
                 type="button"
-                onClick={() => setSelectorAbierto((v) => !v)}
-                className="group flex items-center gap-1 rounded-full border border-neutral-400 bg-white px-2.5 py-1 text-xs font-medium text-neutral-800 shadow-sm transition-all duration-200 ease-out hover:-translate-y-0.5 hover:scale-105 hover:border-neutral-900 hover:bg-neutral-900 hover:text-white hover:shadow-[0_6px_16px_rgba(0,0,0,0.18)] active:translate-y-0 active:scale-95 cursor-pointer"
+                onClick={() => {
+                  if (escuchando) {
+                    detenerEscucha();
+                  } else {
+                    setSelectorAbierto((v) => !v);
+                  }
+                }}
+                className={`group flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium shadow-sm transition-all duration-200 ease-out active:translate-y-0 active:scale-95 cursor-pointer ${
+                  escuchando
+                    ? "border-rose-500 bg-rose-500 text-white animate-pulse"
+                    : "border-neutral-400 bg-white text-neutral-800 hover:-translate-y-0.5 hover:scale-105 hover:border-neutral-900 hover:bg-neutral-900 hover:text-white hover:shadow-[0_6px_16px_rgba(0,0,0,0.18)]"
+                }`}
+                title={escuchando ? "detener dictado" : "cambiar modo de entrada o dictar"}
+                aria-label={escuchando ? "detener dictado" : "selector de entrada"}
               >
-                {modoEntrada === "texto" ? "Texto" : "Visual"}{" "}
-                <span
-                  aria-hidden
-                  className={`inline-block transition-transform duration-200 ${
-                    selectorAbierto ? "rotate-180" : "group-hover:translate-y-0.5"
-                  }`}
-                >
-                  ▾
-                </span>
+                {escuchando ? (
+                  <>
+                    <span aria-hidden className="text-[10px]">■</span>
+                    <span>detener</span>
+                  </>
+                ) : (
+                  <>
+                    <span>{modoEntrada === "texto" ? "Texto" : "Visual"}</span>
+                    <span
+                      aria-hidden
+                      className={`inline-block transition-transform duration-200 ${
+                        selectorAbierto ? "rotate-180" : "group-hover:translate-y-0.5"
+                      }`}
+                    >
+                      ▾
+                    </span>
+                  </>
+                )}
               </button>
               {selectorAbierto && (
                 <button
@@ -590,33 +656,81 @@ export default function FormulaInputBar() {
                 />
               )}
               {selectorAbierto && (
-                <div className="panel-in absolute bottom-full left-0 z-40 mb-1.5 w-32 overflow-hidden rounded-xl border border-neutral-400 bg-white p-1 text-xs shadow-xl">
-                  {(["texto", "visual"] as const).map((m) => (
-                    <button
-                      key={m}
-                      type="button"
-                      onClick={() => {
-                        setSelectorAbierto(false);
-                        setModoEntrada(m);
-                      }}
-                      className="flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-left font-medium transition-all duration-150 hover:translate-x-0.5 hover:bg-neutral-900 hover:text-white active:scale-95 cursor-pointer"
-                    >
-                      {m === "texto" ? "Texto" : "Visual"}
-                      {modoEntrada === m && <span>✓</span>}
-                    </button>
-                  ))}
+                <div className="panel-in absolute bottom-full left-0 z-40 mb-1.5 w-36 overflow-hidden rounded-xl border border-neutral-400 bg-white p-1 text-xs shadow-xl">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectorAbierto(false);
+                      setModoEntrada("texto");
+                    }}
+                    className="flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-left font-medium transition-all duration-150 hover:bg-neutral-900 hover:text-white cursor-pointer"
+                  >
+                    <span>Texto</span>
+                    {modoEntrada === "texto" && !escuchando && <span>✓</span>}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectorAbierto(false);
+                      setModoEntrada("visual");
+                    }}
+                    className="flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-left font-medium transition-all duration-150 hover:bg-neutral-900 hover:text-white cursor-pointer"
+                  >
+                    <span>Visual</span>
+                    {modoEntrada === "visual" && <span>✓</span>}
+                  </button>
+                  <div className="my-1 border-t border-neutral-200" />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectorAbierto(false);
+                      toggleVoz();
+                    }}
+                    className="flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-left font-medium text-neutral-800 transition-all duration-150 hover:bg-neutral-900 hover:text-white cursor-pointer"
+                  >
+                    <span className="flex items-center gap-1.5">
+                      <span aria-hidden>🎙</span>
+                      <span>Dictar</span>
+                    </span>
+                    {escuchando && <span className="h-2 w-2 rounded-full bg-rose-500 animate-pulse" />}
+                  </button>
                 </div>
               )}
             </div>
+
             <div className="relative z-40 ml-2">
               <button
                 type="button"
                 onClick={() => setEjemplosAbiertos((abierto) => !abierto)}
                 aria-expanded={ejemplosAbiertos}
-                className="rounded-full border border-neutral-400 bg-white px-2.5 py-1 text-xs font-medium text-neutral-800 transition-colors hover:bg-neutral-900 hover:text-white"
+                className="group flex items-center gap-1.5 rounded-full border border-neutral-400 bg-white px-2.5 py-1 text-xs font-medium text-neutral-800 shadow-sm transition-all duration-200 ease-out hover:-translate-y-0.5 hover:scale-105 hover:border-neutral-900 hover:bg-neutral-900 hover:text-white hover:shadow-[0_6px_16px_rgba(0,0,0,0.18)] active:translate-y-0 active:scale-95 cursor-pointer"
+                title="cargar ejemplos preparados"
+                aria-label="ejemplos de fórmulas"
               >
-                ejemplos
+                <svg
+                  className="h-3.5 w-3.5 text-neutral-500 transition-colors group-hover:text-white"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+                  />
+                </svg>
+                <span>ejemplos</span>
               </button>
+              {ejemplosAbiertos && (
+                <button
+                  type="button"
+                  aria-label="cerrar ejemplos"
+                  tabIndex={-1}
+                  onClick={() => setEjemplosAbiertos(false)}
+                  className="fixed inset-0 z-30 cursor-default"
+                />
+              )}
               {ejemplosAbiertos && (
                 <div className="panel-in absolute bottom-full left-0 z-40 mb-1.5 w-64 overflow-hidden rounded-xl border border-neutral-400 bg-white p-1 text-xs shadow-xl">
                   {EJEMPLOS.map((ejemplo) => (
@@ -629,10 +743,10 @@ export default function FormulaInputBar() {
                         setInput("");
                         setCursorPos(0);
                       }}
-                      className="flex w-full flex-col rounded-lg px-2.5 py-2 text-left transition-colors hover:bg-neutral-900 hover:text-white"
+                      className="group/item flex w-full flex-col rounded-lg px-2.5 py-2 text-left transition-colors hover:bg-neutral-900 hover:text-white cursor-pointer"
                     >
-                      <span className="font-semibold">{ejemplo.titulo}</span>
-                      <span className="text-[11px] text-neutral-600 group-hover:text-neutral-300">{ejemplo.formulas.length} fórmulas preparadas</span>
+                      <span className="font-semibold text-neutral-900 group-hover/item:text-white">{ejemplo.titulo}</span>
+                      <span className="text-[11px] text-neutral-600 group-hover/item:text-neutral-300">{ejemplo.formulas.length} fórmulas preparadas</span>
                     </button>
                   ))}
                 </div>
@@ -652,7 +766,7 @@ export default function FormulaInputBar() {
             <button
               type="button"
               onClick={() => archivoRef.current?.click()}
-              title="adjuntar .txt o .toml (dominio, relaciones, funciones, entorno y fórmulas)"
+              title="adjuntar .txt o .toml (dominio, predicados, funciones, entorno y fórmulas)"
               aria-label="adjuntar archivo"
               className="group ml-2 inline-flex h-6 w-6 items-center justify-center rounded-full border border-neutral-400 bg-white text-neutral-800 shadow-sm transition-all duration-200 ease-out hover:-translate-y-0.5 hover:scale-110 hover:border-neutral-900 hover:bg-neutral-900 hover:text-white hover:shadow-[0_6px_16px_rgba(0,0,0,0.18)] active:translate-y-0 active:scale-90 cursor-pointer"
             >
@@ -666,6 +780,8 @@ export default function FormulaInputBar() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M21 12.5l-8.5 8.5a5 5 0 01-7-7L14 5.5a3.5 3.5 0 015 5L10.5 19a2 2 0 01-3-3L15 8.5" />
               </svg>
             </button>
+            {estadoVoz && <span className="ml-2 text-xs text-neutral-600 animate-pulse">{estadoVoz}</span>}
+            {previoVoz && <span className="ml-2 max-w-40 truncate text-xs italic text-neutral-500" title={previoVoz}>“{previoVoz}”</span>}
             {avisoArchivo && <span className="ml-3 text-xs text-neutral-700">{avisoArchivo}</span>}
           </div>
         </div>
@@ -680,11 +796,6 @@ export default function FormulaInputBar() {
           }}
         />
       )}
-
-      <ShortcutsFooter
-        copiedShortcut={copiedShortcut}
-        onCopy={copyShortcutToClipboard}
-      />
     </div>
   );
 }

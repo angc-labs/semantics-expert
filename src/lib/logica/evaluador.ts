@@ -24,7 +24,7 @@ export type ResultadoEvaluacion =
     }
   | { ok: false; errores: ErrorLogico[] };
 
-// para que sirve: traducir las revisiones de la interpretacion a errores con tipo
+// traducir las revisiones de la interpretacion a errores con tipo
 // solo se convierten las revisiones que fallaron
 export function erroresDeInterpretacion(interp: Interpretacion, entorno: Entorno): ErrorLogico[] {
   const errores: ErrorLogico[] = [];
@@ -43,7 +43,7 @@ export function erroresDeInterpretacion(interp: Interpretacion, entorno: Entorno
   return errores;
 }
 
-// para que sirve: avisar que variables libres no tienen valor en el entorno
+// avisar que variables libres no tienen valor en el entorno
 export function erroresDeEntorno(libres: string[], entorno: Entorno): ErrorLogico[] {
   return libres
     .filter((v) => entorno[v] === undefined || entorno[v] === "")
@@ -53,7 +53,7 @@ export function erroresDeEntorno(libres: string[], entorno: Entorno): ErrorLogic
     }));
 }
 
-// para que sirve: hacer todo el proceso desde el texto de la formula hasta el resultado
+// hacer todo el proceso desde el texto de la formula hasta el resultado
 export function evaluar(
   texto: string,
   interp: Interpretacion,

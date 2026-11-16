@@ -1,7 +1,6 @@
 // lector de archivos .txt o .toml para cargar dominio, funciones, relaciones, entorno y formulas
 
 import type { FunctionDef, RelationDef, Interpretacion } from "./tipos";
-import { normalizarAtajos } from "./atajos";
 import { revisarInterpretacion } from "./interpretacion";
 
 export interface DatosArchivo {
@@ -217,7 +216,7 @@ export function analizarArchivoAdjunto(contenido: string): DatosArchivo {
     if (mFormulasArr) {
       const items = [...mFormulasArr[1].matchAll(/"([^"]+)"|'([^']+)'/g)].map((m) => m[1] ?? m[2]);
       for (const f of items) {
-        if (f.trim()) res.formulas.push(normalizarAtajos(f.trim()));
+        if (f.trim()) res.formulas.push(f.trim());
       }
       continue;
     }
@@ -314,7 +313,7 @@ export function analizarArchivoAdjunto(contenido: string): DatosArchivo {
       if (mLista) {
         const items = [...mLista[1].matchAll(/"([^"]+)"|'([^']+)'/g)].map((m) => m[1] ?? m[2]);
         for (const f of items) {
-          if (f.trim()) res.formulas.push(normalizarAtajos(f.trim()));
+          if (f.trim()) res.formulas.push(f.trim());
         }
         continue;
       }
@@ -342,7 +341,7 @@ export function analizarArchivoAdjunto(contenido: string): DatosArchivo {
       res.errores.push(`línea no reconocida o definición incompleta: ${l}`);
       continue;
     }
-    res.formulas.push(normalizarAtajos(limpiarComillas(l)));
+    res.formulas.push(limpiarComillas(l));
   }
 
   return res;

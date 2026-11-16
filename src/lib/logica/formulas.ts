@@ -3,7 +3,7 @@
 
 import type { Formula, Termino } from "./tipos";
 
-// para que sirve: escribir un termino, por ejemplo f(x, c)
+// escribir un termino, por ejemplo f(x, c)
 export function textoTermino(t: Termino): string {
   if (t.tipo === "variable") return t.nombre;
   return t.argumentos.length === 0
@@ -11,7 +11,7 @@ export function textoTermino(t: Termino): string {
     : `${t.nombre}(${t.argumentos.map(textoTermino).join(", ")})`;
 }
 
-// para que sirve: escribir una formula con los parentesis necesarios para no confundirse
+// escribir una formula con los parentesis necesarios para no confundirse
 // el resultado vuelve a leerse como la misma formula
 export function textoFormula(f: Formula): string {
   switch (f.tipo) {
@@ -61,7 +61,7 @@ function recorrerLibres(f: Formula, ligadas: Set<string>, salida: string[]) {
   }
 }
 
-// para que sirve: encontrar las variables libres (las que el entorno debe fijar)
+// encontrar las variables libres (las que el entorno debe fijar)
 // una variable ligada por un cuantificador no cuenta, pero fuera de su alcance si
 // devuelve los nombres en el orden en que aparecen, sin repetir
 export function variablesLibres(f: Formula): string[] {

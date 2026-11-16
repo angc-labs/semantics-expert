@@ -54,7 +54,7 @@ export default function DefinitionChips() {
       label: `${rel.name}/${rel.arity}`,
       value: `{ ${rel.tuples.map((t) => textoTupla(t)).join(", ")} }`,
       hasError: !comprobaciones.find((c) => c.simbolo === `r:${rel.name}`)?.ok,
-      onClick: () => enterMode("relacion", rel.name),
+      onClick: () => enterMode("predicado", rel.name),
       onRemove: () => deleteRelation(rel.name),
     })),
     ...Object.entries(environment).map(([v, val]) => ({

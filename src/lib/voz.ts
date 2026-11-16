@@ -1,5 +1,3 @@
-import { normalizarAtajos } from "./logica/atajos";
-
 //Convierte expresiones habituales del dictado en la notacion formal del proyecto.
 export function normalizarDictado(texto: string): string {
   let salida = texto.trim();
@@ -48,7 +46,9 @@ export function normalizarDictado(texto: string): string {
     (_match, nombre: string, argumentos: string) => `${nombre}(${argumentos.replace(/\s+/g, "")})`
   );
 
-  return normalizarAtajos(salida)
+  return salida
+    .replace(/<->/g, "↔")
+    .replace(/->/g, "→")
     .replace(/([∀∃][^\s,()]+),\s*/g, "$1 ")
     .replace(/\(\s+/g, "(")
     .replace(/\s+\)/g, ")")

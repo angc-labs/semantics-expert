@@ -21,7 +21,6 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { useSemanticsStore } from "@/store/useSemanticsStore";
-import { normalizarAtajos } from "@/lib/logica/atajos";
 import { analizarFormula } from "@/lib/logica/sintaxis";
 import { textoFormula, variablesLibres } from "@/lib/logica/formulas";
 import { evaluarFormula, evaluarTermino } from "@/lib/logica/semantica";
@@ -374,9 +373,9 @@ function Constructor({ initialFormula, onClose }: { initialFormula?: string; onC
     setSel(0);
   };
 
-  // interpreta lo escrito: ∀x, Vx, Ax, Ex, ∃x, un predicado R o R(x,y), o un termino/variable x, f, f(x)
+  // interpreta lo escrito: ∀x, un predicado R o R(x,y), o un termino/variable x, f, f(x)
   const agregarTexto = () => {
-    const t = normalizarAtajos(entrada.trim()).replace(/^E(?=[A-Za-z_])/, "∃");
+    const t = entrada.trim();
     const pos = { x: 40 + nodos.length * 24, y: 40 + nodos.length * 24 };
     const q = /^([∀∃VA])\s*([A-Za-z_][A-Za-z0-9_]*)$/.exec(t);
     if (q) {

@@ -57,7 +57,7 @@ export default function HomePage() {
         <div className="min-h-0 overflow-y-auto overscroll-contain rounded-[28px] empty:hidden">
         {activeMode === "dominio" && <DomainPanel />}
         {(activeMode === "funcion" || activeMode === "constante") && <FunctionPanel />}
-        {activeMode === "relacion" && <RelationPanel />}
+        {(activeMode === "relacion" || activeMode === "predicado") && <RelationPanel />}
         {(activeMode === "entorno" || activeMode === "variable") && <EnvironmentPanel />}
         </div>
 

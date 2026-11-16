@@ -1,6 +1,6 @@
 // parte 4 del analisis: semantica
-// evalua una formula ya leida y validada, y arma la explicacion de las razones decisivas
-// aqui se asume que la interpretacion y el entorno ya pasaron las revisiones
+// evalua y arma la explicacion 
+// se asume que la interpretacion y el entorno ya pasaron las revisiones
 
 import type { Entorno, Formula, Interpretacion, Termino } from "./tipos";
 import { textoAplicacion } from "./interpretacion";
@@ -12,7 +12,7 @@ import { textoFormula } from "./formulas";
 //   completa: un universal verdadero o un existencial falso se justifican revisando todo d
 export type TipoJustificacion = "testigo" | "contraejemplo" | "completa";
 
-// un paso de la explicacion: una subformula, su valor y por que vale eso
+// una subformula, su valor y por que vale eso
 export interface Explicacion {
   formula: string;
   valor: boolean;
@@ -27,7 +27,7 @@ export interface Explicacion {
   hijos: Explicacion[];
 }
 
-// para que sirve: calcular el valor de un termino (un elemento de d) bajo un entorno
+// calcula el valor de un termino (un elemento de d) bajo un entorno
 // falla si falta un valor, eso no pasa cuando todo se valido antes
 export function evaluarTermino(t: Termino, interp: Interpretacion, entorno: Entorno): string {
   if (t.tipo === "variable") {
@@ -43,7 +43,7 @@ export function evaluarTermino(t: Termino, interp: Interpretacion, entorno: Ento
   return valor;
 }
 
-// para que sirve: evaluar una formula bajo una interpretacion y un entorno
+// evaluar una formula bajo una interpretacion y un entorno
 // devuelve el valor de verdad y el arbol de explicacion
 export function evaluarFormula(f: Formula, interp: Interpretacion, entorno: Entorno): Explicacion {
   const texto = textoFormula(f);

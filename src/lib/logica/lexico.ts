@@ -2,7 +2,6 @@
 // convierte el texto escrito por el usuario en una lista de piezas (tokens)
 // no revisa si la formula tiene sentido, eso lo hace sintaxis.ts
 
-import { normalizarAtajos } from "./atajos";
 import type { ErrorLogico } from "./errores";
 
 export type TipoToken =
@@ -21,9 +20,8 @@ export type TipoToken =
 
 export interface Token {
   tipo: TipoToken;
-  // texto tal como quedo despues de normalizar atajos
   texto: string;
-  // posicion (desde 0) dentro del texto normalizado
+  // posicion (desde 0) dentro del texto
   posicion: number;
 }
 
@@ -43,12 +41,12 @@ const SIMBOLOS: Record<string, TipoToken> = {
 const ES_INICIO_NOMBRE = /[A-Za-z]/;
 const ES_PARTE_NOMBRE = /[A-Za-z0-9_]/;
 
-// para que sirve: partir el texto de una formula en tokens
-// devuelve los tokens (siempre terminan con "fin") o los errores de caracteres invalidos
+// partir el texto de una formula en tokens
+// devuelve los tokens o los errores de caracteres invalidos
 export function tokenizar(
   entrada: string
 ): { tokens: Token[]; texto: string; errores: ErrorLogico[] } {
-  const texto = normalizarAtajos(entrada);
+  const texto = entrada;
   const tokens: Token[] = [];
   const errores: ErrorLogico[] = [];
   let i = 0;
@@ -66,6 +64,19 @@ export function tokenizar(
       continue;
     }
     if (ES_INICIO_NOMBRE.test(c)) {
+      const prev = tokens[tokens.length - 1]?.tipo;
+      // tras ∀ o ∃, si el usuario escribe "∃yR(x,y)" sin espacio, la variable es de 1 letra
+      // para no pegarla con el predicado en mayuscula que sigue (ej. "y" + "R")
+      if (
+        (prev === "universal" || prev === "existencial") &&
+        /[a-z]/.test(c) &&
+        i + 1 < texto.length &&
+        /[A-Z]/.test(texto[i + 1])
+      ) {
+        tokens.push({ tipo: "nombre", texto: c, posicion: i });
+        i++;
+        continue;
+      }
       let j = i + 1;
       while (j < texto.length && ES_PARTE_NOMBRE.test(texto[j])) j++;
       tokens.push({ tipo: "nombre", texto: texto.slice(i, j), posicion: i });
