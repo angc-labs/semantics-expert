@@ -1,5 +1,4 @@
 // reglas para los nombres de funciones, constantes, relaciones y variables
-
 import type { Interpretacion } from "./tipos";
 
 export const NOMBRES_RESERVADOS: string[] = [];
@@ -10,8 +9,7 @@ const PATRON_NOMBRE = /^[A-Za-z][A-Za-z0-9_]*$/;
 export type TipoSimbolo = "funcion" | "relacion" | "variable";
 
 // revisa si un nombre se puede usar
-// devuelve el problema en texto, o null si todo esta bien
-// nombreoriginal sirve cuando se esta editando: permite dejar el mismo nombre
+// devuelve el problema en texto, o null 
 export function revisarNombre(
   nombre: string,
   tipo: TipoSimbolo,

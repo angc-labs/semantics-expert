@@ -41,8 +41,8 @@ const SIMBOLOS: Record<string, TipoToken> = {
 const ES_INICIO_NOMBRE = /[A-Za-z]/;
 const ES_PARTE_NOMBRE = /[A-Za-z0-9_]/;
 
-// para que sirve: partir el texto de una formula en tokens
-// devuelve los tokens (siempre terminan con "fin") o los errores de caracteres invalidos
+// partir el texto de una formula en tokens
+// devuelve los tokens o los errores de caracteres invalidos
 export function tokenizar(
   entrada: string
 ): { tokens: Token[]; texto: string; errores: ErrorLogico[] } {
