@@ -61,6 +61,7 @@ export default function DomainPanel() {
         ))}
         <input
           ref={inputRef}
+          aria-label="elemento del dominio"
           type="text"
           value={elemInput}
           onChange={(e) => setElemInput(e.target.value)}

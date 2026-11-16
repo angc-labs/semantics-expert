@@ -32,6 +32,8 @@ export default function StatusIndicator({
 
   return (
     <div
+      role="status"
+      aria-live="polite"
       className={`inline-flex items-center gap-2 text-xs text-neutral-700 select-none transition-all ${className}`}
     >
       <span

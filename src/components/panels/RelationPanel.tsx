@@ -216,6 +216,7 @@ export default function RelationPanel() {
           <span className="text-xs text-neutral-700">nombre:</span>
           <input
             ref={nameInputRef}
+            aria-label="nombre de la relación"
             type="text"
             value={relName}
             onChange={(e) => {
@@ -251,6 +252,7 @@ export default function RelationPanel() {
             ))}
             <input
               type="number"
+              aria-label="aridad de la relación"
               min={1}
               max={6}
               value={relArity}
@@ -344,6 +346,7 @@ export default function RelationPanel() {
         <div className="flex items-center gap-2">
           <input
             type="text"
+            aria-label="tupla personalizada"
             value={relCustomTuple}
             onChange={(e) => {
               setRelCustomTuple(e.target.value);

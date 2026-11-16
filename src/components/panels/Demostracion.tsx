@@ -12,6 +12,7 @@ interface Linea {
   just: string;
   suposicion?: boolean;
   valor?: boolean;
+  decisiva?: boolean;
 }
 
 const vf = (b: boolean) => (b ? "V" : "F");
@@ -20,8 +21,15 @@ const vf = (b: boolean) => (b ? "V" : "F");
 // cada elemento de D que se revisa abre una subdemostracion con su suposicion
 function aplanar(raiz: Explicacion): Linea[] {
   const lineas: Linea[] = [];
-  const agregar = (prof: number, texto: string, just: string, suposicion = false, valor?: boolean) => {
-    lineas.push({ n: lineas.length + 1, prof, texto, just, suposicion, valor });
+  const agregar = (
+    prof: number,
+    texto: string,
+    just: string,
+    suposicion = false,
+    valor?: boolean,
+    decisiva = false
+  ) => {
+    lineas.push({ n: lineas.length + 1, prof, texto, just, suposicion, valor, decisiva });
     return lineas.length;
   };
 
@@ -36,7 +44,14 @@ function aplanar(raiz: Explicacion): Linea[] {
         visitar(h, prof + 1);
         rangos.push(`${ini}–${lineas.length}`);
       });
-      return agregar(prof, `${e.formula}  =  ${vf(e.valor)}`, `${e.razon}, ${rangos.join(", ")}`, false, e.valor);
+      return agregar(
+        prof,
+        `${e.formula}  =  ${vf(e.valor)}`,
+        `${e.razon}, ${rangos.join(", ")}`,
+        false,
+        e.valor,
+        Boolean(e.justificacion)
+      );
     }
     const refs = e.hijos.map((h) => visitar(h, prof));
     return agregar(prof, `${e.formula}  =  ${vf(e.valor)}`, `${e.razon}, ${refs.join(", ")}`, false, e.valor);
@@ -74,13 +89,16 @@ export default function Demostracion({ explicacion }: { explicacion: Explicacion
               </span>
               <span className="w-6 text-right tabular-nums">{l.n}.</span>
             </span>
-            <div className={`${fondo} flex items-stretch py-0.5 pr-8`}>
+            <div className={`${fondo} ${l.decisiva ? "ring-2 ring-inset ring-amber-400" : ""} flex items-stretch py-0.5 pr-8`}>
               {Array.from({ length: l.prof }).map((_, i) => (
                 <span key={i} className="mr-2 w-2 shrink-0 border-l border-neutral-900" />
               ))}
               <span className={l.suposicion ? "border-b border-neutral-900 pr-3" : ""}>{l.texto}</span>
             </div>
-            <span className={`${fondo} py-0.5 pr-3 text-neutral-800`}>{l.just}</span>
+            <span className={`${fondo} ${l.decisiva ? "font-semibold text-amber-900" : "text-neutral-800"} py-0.5 pr-3`}>
+              {l.decisiva && <span className="mr-1 text-[10px] uppercase tracking-wide">razón decisiva:</span>}
+              {l.just}
+            </span>
           </React.Fragment>
         );
       })}

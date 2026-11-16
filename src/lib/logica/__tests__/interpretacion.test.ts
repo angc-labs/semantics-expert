@@ -5,6 +5,7 @@ import {
   textoTupla,
   ajustarAlDominio,
   revisarInterpretacion,
+  advertenciasRendimiento,
 } from "../interpretacion";
 import { INTERP } from "./ayuda";
 
@@ -61,6 +62,15 @@ describe("revisarInterpretacion", () => {
     };
     expect(revisarInterpretacion(interp, {}).find((c) => c.id === "f:s")?.ok).toBe(false);
   });
+  it("detecta claves de funciones con aridad o entradas inválidas", () => {
+    const mala = {
+      ...INTERP,
+      funciones: { s: { name: "s", arity: 1, mapping: { "1,2": "1", "9": "1" } } },
+    };
+    const comprobacion = revisarInterpretacion(mala, {}).find((c) => c.id === "f:s");
+    expect(comprobacion?.ok).toBe(false);
+    expect(comprobacion?.detalle).toContain("clave");
+  });
   it("detecta relaciones vacias o con tuplas malas", () => {
     const vacia = { ...INTERP, relaciones: { p: { name: "p", arity: 1, tuples: [] } } };
     expect(revisarInterpretacion(vacia, {}).find((c) => c.id === "r:p")?.ok).toBe(false);
@@ -75,5 +85,22 @@ describe("revisarInterpretacion", () => {
     expect(revisarInterpretacion(choque, {}).find((c) => c.id === "nombres")?.ok).toBe(false);
     expect(revisarInterpretacion(INTERP, { x: "9" }).find((c) => c.id === "s:x")?.ok).toBe(false);
     expect(revisarInterpretacion(INTERP, { c: "1" }).find((c) => c.id === "s:c")?.ok).toBe(false);
+  });
+  it("detecta tuplas duplicadas y nombres inválidos", () => {
+    const mala = {
+      dominio: ["1"],
+      funciones: { "_f": { name: "_f", arity: 0, mapping: { "": "1" } } },
+      relaciones: { p: { name: "p", arity: 1, tuples: [["1"], ["1"]] } },
+    };
+    expect(revisarInterpretacion(mala, {}).find((c) => c.id === "nombres")?.ok).toBe(false);
+    expect(revisarInterpretacion(mala, {}).find((c) => c.id === "r:p")?.ok).toBe(false);
+  });
+  it("advierte sobre tablas grandes sin invalidar la interpretación", () => {
+    const interp = {
+      dominio: Array.from({ length: 11 }, (_, i) => String(i)),
+      funciones: { f: { name: "f", arity: 5, mapping: {} } },
+      relaciones: {},
+    };
+    expect(advertenciasRendimiento(interp).length).toBeGreaterThan(0);
   });
 });

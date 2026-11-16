@@ -108,6 +108,7 @@ export default function FunctionPanel() {
           <span className="text-xs text-neutral-700">nombre:</span>
           <input
             ref={nameInputRef}
+            aria-label="nombre de la función"
             type="text"
             value={funcName}
             onChange={(e) => {

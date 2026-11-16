@@ -53,6 +53,7 @@ export default function MenuDropdown({
     <div
       ref={menuRef}
       role="listbox"
+      aria-label={triggerType === "@" ? "símbolos lógicos" : "comandos de edición"}
       className="panel-in absolute bottom-full left-0 mb-3 w-full max-h-64 overflow-y-auto rounded-3xl border border-neutral-400 bg-white/95 backdrop-blur p-1.5 shadow-[0_12px_40px_rgba(0,0,0,0.12)] z-20"
     >
       <div
@@ -73,6 +74,8 @@ export default function MenuDropdown({
             key={item.id}
             data-menu-idx={idx}
             type="button"
+            role="option"
+            aria-selected={isSelected}
             onMouseDown={(e) => {
               e.preventDefault();
               onSelect(item);

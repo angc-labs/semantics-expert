@@ -2,10 +2,12 @@
 
 import React, { useState, useRef, useMemo, useEffect } from "react";
 import { useSemanticsStore, type ActiveMode } from "@/store/useSemanticsStore";
-import { analizarArchivoAdjunto } from "@/lib/logica/archivo";
+import { analizarArchivoAdjunto, erroresDeImportacion } from "@/lib/logica/archivo";
 import { revisarInterpretacion } from "@/lib/logica/interpretacion";
 import MenuDropdown, { type MenuItem } from "./MenuDropdown";
 import VisualBuilder from "./VisualBuilder";
+import { EJEMPLOS } from "@/lib/logica/ejemplos";
+import { normalizarDictado } from "@/lib/voz";
 
 const SYMBOL_ITEMS: MenuItem[] = [
   {
@@ -216,6 +218,7 @@ export default function FormulaInputBar() {
   const evaluateFormula = useSemanticsStore((s) => s.evaluateFormula);
   const importFromFile = useSemanticsStore((s) => s.importFromFile);
   const resetAll = useSemanticsStore((s) => s.resetAll);
+  const loadExample = useSemanticsStore((s) => s.loadExample);
 
   const [input, setInput] = useState("");
   const [cursorPos, setCursorPos] = useState(0);
@@ -223,6 +226,12 @@ export default function FormulaInputBar() {
   const [dismissedAt, setDismissedAt] = useState<number | null>(null);
   const [modoEntrada, setModoEntrada] = useState<"texto" | "visual">("texto");
   const [selectorAbierto, setSelectorAbierto] = useState(false);
+  const [ejemplosAbiertos, setEjemplosAbiertos] = useState(false);
+
+  const reconocimientoRef = useRef<any>(null);
+  const [escuchando, setEscuchando] = useState(false);
+  const [estadoVoz, setEstadoVoz] = useState<string | null>(null);
+  const [previoVoz, setPrevioVoz] = useState("");
 
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const archivoRef = useRef<HTMLInputElement | null>(null);
@@ -233,13 +242,27 @@ export default function FormulaInputBar() {
     const texto = await archivo.text();
     const datos = analizarArchivoAdjunto(texto);
     const totalDefs =
-      (datos.dominio ? 1 : 0) +
+      (datos.dominio !== undefined ? 1 : 0) +
       Object.keys(datos.funciones).length +
       Object.keys(datos.relaciones).length +
       Object.keys(datos.entorno).length;
-    if (totalDefs === 0 && datos.formulas.length === 0) {
+    if (datos.errores.length > 0) {
+      setAvisoArchivo(`${archivo.name}: importación rechazada — ${datos.errores.join(" | ")}`);
+    } else if (totalDefs === 0 && datos.formulas.length === 0) {
       setAvisoArchivo(`${archivo.name}: archivo vacío`);
     } else {
+      if (totalDefs > 0) {
+        const errores = erroresDeImportacion(
+          datos,
+          { dominio: domain, funciones: functions, relaciones: relations },
+          environment
+        );
+        if (errores.length > 0) {
+          setAvisoArchivo(`${archivo.name}: importación rechazada — ${errores.join(" | ")}`);
+          setTimeout(() => setAvisoArchivo(null), 7000);
+          return;
+        }
+      }
       importFromFile(datos);
       const partes: string[] = [];
       if (totalDefs > 0) partes.push("interpretación cargada");
@@ -337,7 +360,75 @@ export default function FormulaInputBar() {
     }
   };
 
+  useEffect(() => {
+    return () => reconocimientoRef.current?.abort();
+  }, []);
+
+  const iniciarEscucha = () => {
+    const ventana = typeof window !== "undefined" ? (window as any) : null;
+    const Constructor = ventana?.SpeechRecognition || ventana?.webkitSpeechRecognition;
+    if (!Constructor) {
+      setEstadoVoz("navegador sin soporte de voz");
+      setTimeout(() => setEstadoVoz(null), 3500);
+      return;
+    }
+
+    const reconocimiento = new Constructor();
+    reconocimiento.lang = "es-SV";
+    reconocimiento.continuous = false;
+    reconocimiento.interimResults = true;
+    reconocimiento.onresult = (evento: any) => {
+      let provisional = "";
+      for (let i = evento.resultIndex; i < evento.results.length; i++) {
+        const resultado = evento.results[i];
+        if (resultado.length > 0) {
+          if (resultado.isFinal) {
+            const textoNorm = normalizarDictado(resultado[0].transcript);
+            if (textoNorm) {
+              insertAtCursor(`${input && cursorPos > 0 ? " " : ""}${textoNorm}`);
+            }
+          } else {
+            provisional += resultado[0].transcript;
+          }
+        }
+      }
+      setPrevioVoz(provisional);
+    };
+    reconocimiento.onerror = (evento: any) => {
+      setEscuchando(false);
+      setPrevioVoz("");
+      setEstadoVoz(evento?.error === "not-allowed" ? "micrófono denegado" : "no se pudo reconocer la voz");
+      setTimeout(() => setEstadoVoz(null), 3500);
+    };
+    reconocimiento.onend = () => {
+      setEscuchando(false);
+      setPrevioVoz("");
+      setEstadoVoz(null);
+    };
+    reconocimientoRef.current = reconocimiento;
+    setEstadoVoz("escuchando…");
+    setEscuchando(true);
+    reconocimiento.start();
+  };
+
+  const detenerEscucha = () => {
+    reconocimientoRef.current?.stop();
+    setEscuchando(false);
+    setPrevioVoz("");
+    setEstadoVoz(null);
+  };
+
+  const toggleVoz = () => {
+    if (escuchando) detenerEscucha();
+    else iniciarEscucha();
+  };
+
   const handleEvaluateOrSubmit = () => {
+    if (!interpretacionValida) {
+      setAvisoArchivo("corrige la interpretación antes de evaluar una fórmula");
+      setTimeout(() => setAvisoArchivo(null), 4000);
+      return;
+    }
     const rawTrimmed = input.trim();
     if (!rawTrimmed) {
       if (formula) evaluateFormula(formula);
@@ -467,6 +558,9 @@ export default function FormulaInputBar() {
             <span className="text-neutral-700 select-none text-base font-mono">&gt;</span>
             <textarea
               ref={textareaRef}
+              aria-label="fórmula lógica"
+              aria-describedby="formula-ayuda"
+              aria-invalid={!interpretacionValida}
               rows={1}
               value={input}
               onChange={(e) => {
@@ -491,7 +585,7 @@ export default function FormulaInputBar() {
             <button
               type="button"
               onClick={handleEvaluateOrSubmit}
-              disabled={!input.trim() && !formula}
+              disabled={(!input.trim() && !formula) || !interpretacionValida}
               title="evaluar formula (enter)"
               aria-label="evaluar formula"
               className="shrink-0 flex h-8 w-8 items-center justify-center rounded-full bg-neutral-900 text-white shadow-sm transition-all hover:bg-neutral-800 hover:scale-105 active:scale-95 disabled:opacity-20 disabled:pointer-events-none disabled:scale-100 cursor-pointer"
@@ -511,22 +605,46 @@ export default function FormulaInputBar() {
               </svg>
             </button>
           </div>
+          <span id="formula-ayuda" className="sr-only">
+            Escribe una fórmula usando los botones, el teclado o dictado por voz.
+          </span>
           <div className="mt-2 flex flex-wrap items-center pl-1">
             <div className="relative z-40 shrink-0">
               <button
                 type="button"
-                onClick={() => setSelectorAbierto((v) => !v)}
-                className="group flex items-center gap-1 rounded-full border border-neutral-400 bg-white px-2.5 py-1 text-xs font-medium text-neutral-800 shadow-sm transition-all duration-200 ease-out hover:-translate-y-0.5 hover:scale-105 hover:border-neutral-900 hover:bg-neutral-900 hover:text-white hover:shadow-[0_6px_16px_rgba(0,0,0,0.18)] active:translate-y-0 active:scale-95 cursor-pointer"
+                onClick={() => {
+                  if (escuchando) {
+                    detenerEscucha();
+                  } else {
+                    setSelectorAbierto((v) => !v);
+                  }
+                }}
+                className={`group flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium shadow-sm transition-all duration-200 ease-out active:translate-y-0 active:scale-95 cursor-pointer ${
+                  escuchando
+                    ? "border-rose-500 bg-rose-500 text-white animate-pulse"
+                    : "border-neutral-400 bg-white text-neutral-800 hover:-translate-y-0.5 hover:scale-105 hover:border-neutral-900 hover:bg-neutral-900 hover:text-white hover:shadow-[0_6px_16px_rgba(0,0,0,0.18)]"
+                }`}
+                title={escuchando ? "detener dictado" : "cambiar modo de entrada o dictar"}
+                aria-label={escuchando ? "detener dictado" : "selector de entrada"}
               >
-                {modoEntrada === "texto" ? "Texto" : "Visual"}{" "}
-                <span
-                  aria-hidden
-                  className={`inline-block transition-transform duration-200 ${
-                    selectorAbierto ? "rotate-180" : "group-hover:translate-y-0.5"
-                  }`}
-                >
-                  ▾
-                </span>
+                {escuchando ? (
+                  <>
+                    <span aria-hidden className="text-[10px]">■</span>
+                    <span>detener</span>
+                  </>
+                ) : (
+                  <>
+                    <span>{modoEntrada === "texto" ? "Texto" : "Visual"}</span>
+                    <span
+                      aria-hidden
+                      className={`inline-block transition-transform duration-200 ${
+                        selectorAbierto ? "rotate-180" : "group-hover:translate-y-0.5"
+                      }`}
+                    >
+                      ▾
+                    </span>
+                  </>
+                )}
               </button>
               {selectorAbierto && (
                 <button
@@ -538,19 +656,97 @@ export default function FormulaInputBar() {
                 />
               )}
               {selectorAbierto && (
-                <div className="panel-in absolute bottom-full left-0 z-40 mb-1.5 w-32 overflow-hidden rounded-xl border border-neutral-400 bg-white p-1 text-xs shadow-xl">
-                  {(["texto", "visual"] as const).map((m) => (
+                <div className="panel-in absolute bottom-full left-0 z-40 mb-1.5 w-36 overflow-hidden rounded-xl border border-neutral-400 bg-white p-1 text-xs shadow-xl">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectorAbierto(false);
+                      setModoEntrada("texto");
+                    }}
+                    className="flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-left font-medium transition-all duration-150 hover:bg-neutral-900 hover:text-white cursor-pointer"
+                  >
+                    <span>Texto</span>
+                    {modoEntrada === "texto" && !escuchando && <span>✓</span>}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectorAbierto(false);
+                      setModoEntrada("visual");
+                    }}
+                    className="flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-left font-medium transition-all duration-150 hover:bg-neutral-900 hover:text-white cursor-pointer"
+                  >
+                    <span>Visual</span>
+                    {modoEntrada === "visual" && <span>✓</span>}
+                  </button>
+                  <div className="my-1 border-t border-neutral-200" />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectorAbierto(false);
+                      toggleVoz();
+                    }}
+                    className="flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-left font-medium text-neutral-800 transition-all duration-150 hover:bg-neutral-900 hover:text-white cursor-pointer"
+                  >
+                    <span className="flex items-center gap-1.5">
+                      <span aria-hidden>🎙</span>
+                      <span>Dictar</span>
+                    </span>
+                    {escuchando && <span className="h-2 w-2 rounded-full bg-rose-500 animate-pulse" />}
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <div className="relative z-40 ml-2">
+              <button
+                type="button"
+                onClick={() => setEjemplosAbiertos((abierto) => !abierto)}
+                aria-expanded={ejemplosAbiertos}
+                className="group flex items-center gap-1.5 rounded-full border border-neutral-400 bg-white px-2.5 py-1 text-xs font-medium text-neutral-800 shadow-sm transition-all duration-200 ease-out hover:-translate-y-0.5 hover:scale-105 hover:border-neutral-900 hover:bg-neutral-900 hover:text-white hover:shadow-[0_6px_16px_rgba(0,0,0,0.18)] active:translate-y-0 active:scale-95 cursor-pointer"
+                title="cargar ejemplos preparados"
+                aria-label="ejemplos de fórmulas"
+              >
+                <svg
+                  className="h-3.5 w-3.5 text-neutral-500 transition-colors group-hover:text-white"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+                  />
+                </svg>
+                <span>ejemplos</span>
+              </button>
+              {ejemplosAbiertos && (
+                <button
+                  type="button"
+                  aria-label="cerrar ejemplos"
+                  tabIndex={-1}
+                  onClick={() => setEjemplosAbiertos(false)}
+                  className="fixed inset-0 z-30 cursor-default"
+                />
+              )}
+              {ejemplosAbiertos && (
+                <div className="panel-in absolute bottom-full left-0 z-40 mb-1.5 w-64 overflow-hidden rounded-xl border border-neutral-400 bg-white p-1 text-xs shadow-xl">
+                  {EJEMPLOS.map((ejemplo) => (
                     <button
-                      key={m}
+                      key={ejemplo.id}
                       type="button"
                       onClick={() => {
-                        setSelectorAbierto(false);
-                        setModoEntrada(m);
+                        loadExample(ejemplo.id);
+                        setEjemplosAbiertos(false);
+                        setInput("");
+                        setCursorPos(0);
                       }}
-                      className="flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-left font-medium transition-all duration-150 hover:translate-x-0.5 hover:bg-neutral-900 hover:text-white active:scale-95 cursor-pointer"
+                      className="group/item flex w-full flex-col rounded-lg px-2.5 py-2 text-left transition-colors hover:bg-neutral-900 hover:text-white cursor-pointer"
                     >
-                      {m === "texto" ? "Texto" : "Visual"}
-                      {modoEntrada === m && <span>✓</span>}
+                      <span className="font-semibold text-neutral-900 group-hover/item:text-white">{ejemplo.titulo}</span>
+                      <span className="text-[11px] text-neutral-600 group-hover/item:text-neutral-300">{ejemplo.formulas.length} fórmulas preparadas</span>
                     </button>
                   ))}
                 </div>
@@ -584,6 +780,8 @@ export default function FormulaInputBar() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M21 12.5l-8.5 8.5a5 5 0 01-7-7L14 5.5a3.5 3.5 0 015 5L10.5 19a2 2 0 01-3-3L15 8.5" />
               </svg>
             </button>
+            {estadoVoz && <span className="ml-2 text-xs text-neutral-600 animate-pulse">{estadoVoz}</span>}
+            {previoVoz && <span className="ml-2 max-w-40 truncate text-xs italic text-neutral-500" title={previoVoz}>“{previoVoz}”</span>}
             {avisoArchivo && <span className="ml-3 text-xs text-neutral-700">{avisoArchivo}</span>}
           </div>
         </div>

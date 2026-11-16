@@ -1,11 +1,35 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import StatusIndicator from "@/components/StatusIndicator";
 import SyntaxTree from "@/components/panels/SyntaxTree";
 import type { EvaluationItem } from "@/store/useSemanticsStore";
 import Demostracion, { FUENTE_CLASICA } from "@/components/panels/Demostracion";
+import SpeechReader from "@/components/panels/SpeechReader";
+
+function textoParaLeer(item: EvaluationItem): string {
+  const resultado = item.resultado;
+  if (!resultado?.ok) {
+    return `La fórmula ${item.formula} no tiene valor de verdad. ${
+      resultado?.errores.map((error) => error.mensaje).join(". ") ?? "Hay errores de validación."
+    }`;
+  }
+
+  const razones: string[] = [];
+  const recorrer = (explicacion: typeof resultado.explicacion) => {
+    razones.push(`${explicacion.formula}: ${explicacion.razon}.`);
+    explicacion.hijos.forEach(recorrer);
+  };
+  recorrer(resultado.explicacion);
+  return `La fórmula ${item.formula} es ${resultado.etiqueta}. ${razones.join(" ")}`.slice(0, 5000);
+}
+
+function razonDecisivaParaLeer(item: EvaluationItem): string {
+  const resultado = item.resultado;
+  if (!resultado?.ok) return textoParaLeer(item);
+  return `La razón decisiva para que la fórmula sea ${resultado.etiqueta} es: ${resultado.explicacion.razon}.`;
+}
 
 function Seccion({ titulo, children }: { titulo: string; children: React.ReactNode }) {
   return (
@@ -25,11 +49,14 @@ export default function ResolutionModal({
   numero: number;
   onClose: () => void;
 }) {
+  const dialogRef = useRef<HTMLDivElement | null>(null);
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     window.addEventListener("keydown", onKey);
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
+    dialogRef.current?.focus();
     return () => {
       window.removeEventListener("keydown", onKey);
       document.body.style.overflow = prev;
@@ -49,8 +76,11 @@ export default function ResolutionModal({
       onClick={onClose}
       role="dialog"
       aria-modal="true"
+      aria-labelledby="resolution-title"
     >
       <div
+        ref={dialogRef}
+        tabIndex={-1}
         className="panel-in relative flex h-[88vh] w-full max-w-6xl flex-col overflow-hidden rounded-[28px] bg-white shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
@@ -59,7 +89,7 @@ export default function ResolutionModal({
             <div className="text-[11px] text-neutral-600">
               formula #{numero} · {item.timestamp}
             </div>
-            <div style={{ fontFamily: FUENTE_CLASICA }} className="text-xl text-neutral-900 break-words">{item.formula}</div>
+            <div id="resolution-title" style={{ fontFamily: FUENTE_CLASICA }} className="text-xl text-neutral-900 break-words">{item.formula}</div>
           </div>
           <button
             type="button"
@@ -77,6 +107,10 @@ export default function ResolutionModal({
               label={item.statusLabel ?? "evaluando"}
               estado={item.statusState ?? "cargando"}
               pulsando={item.statusState === "cargando"}
+            />
+            <SpeechReader
+              text={textoParaLeer(item)}
+              decisiveText={razonDecisivaParaLeer(item)}
             />
             {r?.ok === false && (
               <Seccion titulo="errores">

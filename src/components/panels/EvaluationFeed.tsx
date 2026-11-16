@@ -32,6 +32,7 @@ export default function EvaluationFeed() {
             <button
               key={item.id}
               type="button"
+              aria-label={`abrir explicación de la fórmula ${idx + 1}: ${item.formula}`}
               onClick={() => setOpenId(item.id)}
               className="chip-in group flex w-full items-center gap-3 rounded-2xl border border-neutral-400 bg-white/90 px-4 py-3 text-left shadow-sm backdrop-blur transition-all hover:-translate-y-0.5 hover:border-neutral-400 hover:shadow-md cursor-pointer"
             >
