@@ -116,18 +116,7 @@ export default function NotebookSidebar() {
                       className="w-full rounded border border-neutral-400 bg-white px-1.5 py-0.5 text-xs font-medium text-neutral-900 outline-none"
                     />
                   ) : (
-                    <div className="flex items-center gap-1.5 truncate">
-                      <span className="truncate text-sm font-medium">{nb.title}</span>
-                      {nb.isTemplate && (
-                        <span
-                          className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${
-                            activo ? "bg-amber-400/25 text-amber-300" : "bg-amber-100 text-amber-800"
-                          }`}
-                        >
-                          plantilla
-                        </span>
-                      )}
-                    </div>
+                    <div className="truncate text-sm font-medium">{nb.title}</div>
                   )}
                   <div
                     className={`mt-0.5 truncate text-[11px] ${
@@ -143,13 +132,13 @@ export default function NotebookSidebar() {
                     {/* Boton bookmark para guardar / quitar como plantilla */}
                     <button
                       type="button"
-                      title={nb.isTemplate ? "quitar de plantillas" : "guardar como plantilla (ejemplo)"}
-                      aria-label={nb.isTemplate ? "quitar de plantillas" : "guardar como plantilla (ejemplo)"}
+                      title={nb.isTemplate ? "quitar de plantillas" : "guardar como plantilla"}
+                      aria-label={nb.isTemplate ? "quitar de plantillas" : "guardar como plantilla"}
                       onClick={(e) => {
                         e.stopPropagation();
                         toggleNotebookTemplate(nb.id);
                       }}
-                      className={`flex h-8 w-8 items-center justify-center rounded-xl transition-all cursor-pointer ${
+                      className={`flex h-6 w-6 items-center justify-center rounded-md transition-all cursor-pointer ${
                         nb.isTemplate
                           ? activo
                             ? "text-amber-300 hover:bg-neutral-800"
@@ -160,11 +149,11 @@ export default function NotebookSidebar() {
                       }`}
                     >
                       {nb.isTemplate ? (
-                        <svg className="h-4.5 w-4.5" viewBox="0 0 24 24" fill="currentColor">
+                        <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor">
                           <path d="M5 4a2 2 0 012-2h10a2 2 0 012 2v17l-7-4-7 4V4z" />
                         </svg>
                       ) : (
-                        <svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                           <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
                         </svg>
                       )}
@@ -179,13 +168,13 @@ export default function NotebookSidebar() {
                         e.stopPropagation();
                         iniciarEdicion(nb.id, nb.title);
                       }}
-                      className={`flex h-8 w-8 items-center justify-center rounded-xl opacity-0 transition-all group-hover:opacity-100 cursor-pointer ${
+                      className={`flex h-6 w-6 items-center justify-center rounded-md opacity-0 transition-all group-hover:opacity-100 cursor-pointer ${
                         activo
                           ? "text-neutral-300 hover:bg-neutral-800 hover:text-white"
                           : "text-neutral-600 hover:bg-neutral-200 hover:text-neutral-900"
                       }`}
                     >
-                      <svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path
                           strokeLinecap="round"
                           strokeLinejoin="round"
@@ -203,13 +192,13 @@ export default function NotebookSidebar() {
                         e.stopPropagation();
                         deleteNotebook(nb.id);
                       }}
-                      className={`flex h-8 w-8 items-center justify-center rounded-xl opacity-0 transition-all group-hover:opacity-100 cursor-pointer ${
+                      className={`flex h-6 w-6 items-center justify-center rounded-md opacity-0 transition-all group-hover:opacity-100 cursor-pointer ${
                         activo
                           ? "text-neutral-300 hover:bg-rose-600 hover:text-white"
                           : "text-neutral-600 hover:bg-rose-100 hover:text-rose-700"
                       }`}
                     >
-                      <svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                       </svg>
                     </button>
