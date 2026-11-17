@@ -6,7 +6,6 @@ import { analizarArchivoAdjunto, erroresDeImportacion } from "@/lib/logica/archi
 import { revisarInterpretacion } from "@/lib/logica/interpretacion";
 import MenuDropdown, { type MenuItem } from "./MenuDropdown";
 import VisualBuilder from "./VisualBuilder";
-import { EJEMPLOS } from "@/lib/logica/ejemplos";
 import { normalizarDictado } from "@/lib/voz";
 
 const SYMBOL_ITEMS: MenuItem[] = [
@@ -218,7 +217,8 @@ export default function FormulaInputBar() {
   const evaluateFormula = useSemanticsStore((s) => s.evaluateFormula);
   const importFromFile = useSemanticsStore((s) => s.importFromFile);
   const resetAll = useSemanticsStore((s) => s.resetAll);
-  const loadExample = useSemanticsStore((s) => s.loadExample);
+  const notebooks = useSemanticsStore((s) => s.notebooks);
+  const loadTemplate = useSemanticsStore((s) => s.loadTemplate);
 
   const [input, setInput] = useState("");
   const [cursorPos, setCursorPos] = useState(0);
@@ -226,7 +226,7 @@ export default function FormulaInputBar() {
   const [dismissedAt, setDismissedAt] = useState<number | null>(null);
   const [modoEntrada, setModoEntrada] = useState<"texto" | "visual">("texto");
   const [selectorAbierto, setSelectorAbierto] = useState(false);
-  const [ejemplosAbiertos, setEjemplosAbiertos] = useState(false);
+  const [plantillasAbiertas, setPlantillasAbiertas] = useState(false);
 
   const reconocimientoRef = useRef<any>(null);
   const [escuchando, setEscuchando] = useState(false);
@@ -701,11 +701,11 @@ export default function FormulaInputBar() {
             <div className="relative z-40 ml-2">
               <button
                 type="button"
-                onClick={() => setEjemplosAbiertos((abierto) => !abierto)}
-                aria-expanded={ejemplosAbiertos}
+                onClick={() => setPlantillasAbiertas((abierto) => !abierto)}
+                aria-expanded={plantillasAbiertas}
                 className="group flex items-center gap-1.5 rounded-full border border-neutral-400 bg-white px-2.5 py-1 text-xs font-medium text-neutral-800 shadow-sm transition-all duration-200 ease-out hover:-translate-y-0.5 hover:scale-105 hover:border-neutral-900 hover:bg-neutral-900 hover:text-white hover:shadow-[0_6px_16px_rgba(0,0,0,0.18)] active:translate-y-0 active:scale-95 cursor-pointer"
-                title="cargar ejemplos preparados"
-                aria-label="ejemplos de fórmulas"
+                title="cargar plantillas (notebooks marcados con bookmark)"
+                aria-label="plantillas de notebooks"
               >
                 <svg
                   className="h-3.5 w-3.5 text-neutral-500 transition-colors group-hover:text-white"
@@ -717,38 +717,61 @@ export default function FormulaInputBar() {
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+                    d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
                   />
                 </svg>
-                <span>ejemplos</span>
+                <span>plantillas</span>
               </button>
-              {ejemplosAbiertos && (
+              {plantillasAbiertas && (
                 <button
                   type="button"
-                  aria-label="cerrar ejemplos"
+                  aria-label="cerrar plantillas"
                   tabIndex={-1}
-                  onClick={() => setEjemplosAbiertos(false)}
+                  onClick={() => setPlantillasAbiertas(false)}
                   className="fixed inset-0 z-30 cursor-default"
                 />
               )}
-              {ejemplosAbiertos && (
-                <div className="panel-in absolute bottom-full left-0 z-40 mb-1.5 w-64 overflow-hidden rounded-xl border border-neutral-400 bg-white p-1 text-xs shadow-xl">
-                  {EJEMPLOS.map((ejemplo) => (
-                    <button
-                      key={ejemplo.id}
-                      type="button"
-                      onClick={() => {
-                        loadExample(ejemplo.id);
-                        setEjemplosAbiertos(false);
-                        setInput("");
-                        setCursorPos(0);
-                      }}
-                      className="group/item flex w-full flex-col rounded-lg px-2.5 py-2 text-left transition-colors hover:bg-neutral-900 hover:text-white cursor-pointer"
-                    >
-                      <span className="font-semibold text-neutral-900 group-hover/item:text-white">{ejemplo.titulo}</span>
-                      <span className="text-[11px] text-neutral-600 group-hover/item:text-neutral-300">{ejemplo.formulas.length} fórmulas preparadas</span>
-                    </button>
-                  ))}
+              {plantillasAbiertas && (
+                <div className="panel-in absolute bottom-full left-0 z-40 mb-1.5 w-72 overflow-hidden rounded-2xl border border-neutral-400 bg-white p-1.5 text-xs shadow-xl">
+                  <div className="flex items-center justify-between border-b border-neutral-200 px-2.5 py-1.5 mb-1 text-[11px] font-semibold uppercase tracking-wider text-neutral-500">
+                    <span>Plantillas ({notebooks.filter((nb) => nb.isTemplate).length})</span>
+                  </div>
+                  {notebooks.filter((nb) => nb.isTemplate).length === 0 ? (
+                    <div className="p-3 text-center">
+                      <p className="text-xs font-semibold text-neutral-800">Sin plantillas guardadas</p>
+                      <p className="mt-1 text-[11px] text-neutral-500 leading-relaxed">
+                        Marca cualquier notebook con el icono de bookmark (marcador) en la barra lateral para usarlo aquí como plantilla.
+                      </p>
+                    </div>
+                  ) : (
+                    notebooks
+                      .filter((nb) => nb.isTemplate)
+                      .map((plantilla) => (
+                        <button
+                          key={plantilla.id}
+                          type="button"
+                          onClick={() => {
+                            loadTemplate(plantilla.id);
+                            setPlantillasAbiertas(false);
+                            setInput("");
+                            setCursorPos(0);
+                          }}
+                          className="group/item flex w-full flex-col rounded-xl px-2.5 py-2 text-left transition-colors hover:bg-neutral-900 hover:text-white cursor-pointer"
+                        >
+                          <div className="flex items-center justify-between w-full">
+                            <span className="font-semibold text-neutral-900 group-hover/item:text-white truncate">
+                              {plantilla.title}
+                            </span>
+                            <span className="text-[10px] text-neutral-400 group-hover/item:text-neutral-300 ml-2 shrink-0">
+                              cargar
+                            </span>
+                          </div>
+                          <span className="text-[11px] text-neutral-600 group-hover/item:text-neutral-300 truncate">
+                            D = {`{${plantilla.domain.join(", ")}}`} · {plantilla.evaluationHistory.length} fórm.
+                          </span>
+                        </button>
+                      ))
+                  )}
                 </div>
               )}
             </div>

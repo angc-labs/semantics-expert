@@ -6,7 +6,6 @@ import { persist } from "zustand/middleware";
 import type { FunctionDef, RelationDef } from "@/lib/logica/tipos";
 import { ajustarAlDominio, revisarInterpretacion } from "@/lib/logica/interpretacion";
 import { evaluar, type ResultadoEvaluacion } from "@/lib/logica/evaluador";
-import { buscarEjemplo } from "@/lib/logica/ejemplos";
 import type { DatosArchivo } from "@/lib/logica/archivo";
 import type { EstadoPunto } from "@/components/StatusIndicator";
 
@@ -42,6 +41,7 @@ export interface Notebook {
   formula: string;
   logs: string[];
   evaluationHistory: EvaluationItem[];
+  isTemplate?: boolean;
 }
 
 // para que sirve: evaluar una formula y dejarla lista para el historial
@@ -65,7 +65,7 @@ function crearEvaluacion(
   };
 }
 
-function nuevoNotebook(titulo = "Notebook 1"): Notebook {
+function nuevoNotebook(titulo = "Notebook 1", esPlantilla = false): Notebook {
   return {
     id: `nb-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
     title: titulo,
@@ -77,6 +77,7 @@ function nuevoNotebook(titulo = "Notebook 1"): Notebook {
     formula: "",
     logs: [],
     evaluationHistory: [],
+    isTemplate: esPlantilla,
   };
 }
 
@@ -91,6 +92,7 @@ const NOTEBOOK_INICIAL: Notebook = {
   formula: "",
   logs: [],
   evaluationHistory: [],
+  isTemplate: false,
 };
 
 // sincroniza los campos activos dentro del arreglo de notebooks
@@ -159,6 +161,7 @@ interface SemanticsStore {
   selectNotebook: (id: string) => void;
   renameNotebook: (id: string, title: string) => void;
   deleteNotebook: (id: string) => void;
+  toggleNotebookTemplate: (id: string) => void;
 
   // acciones para cambiar el modo
   enterMode: (mode: ActiveMode, editName?: string) => void;
@@ -176,7 +179,8 @@ interface SemanticsStore {
 
   // evalua una formula con la interpretacion actual y la agrega al historial
   evaluateFormula: (texto: string) => void;
-  // reemplaza la interpretacion por un ejemplo de las presentaciones y evalua sus formulas
+  // reemplaza la interpretacion por una plantilla de notebook (marcado con bookmark)
+  loadTemplate: (id: string) => void;
   loadExample: (id: string) => void;
   // importa dominio, funciones, relaciones, entorno y formulas desde un archivo .txt o .toml
   importFromFile: (datos: DatosArchivo) => void;
@@ -291,6 +295,21 @@ export const useSemanticsStore = create<SemanticsStore>()(
             evaluationHistory: siguiente.evaluationHistory,
             activeMode: null,
             editingName: null,
+          };
+        }),
+
+      toggleNotebookTemplate: (id) =>
+        set((state) => {
+          const updated = state.notebooks.map((nb) =>
+            nb.id === id ? { ...nb, isTemplate: !nb.isTemplate } : nb
+          );
+          const marcado = updated.find((nb) => nb.id === id);
+          const aviso = marcado?.isTemplate
+            ? `notebook "${marcado.title}" marcado como plantilla`
+            : `notebook "${marcado?.title}" desmarcado de plantillas`;
+          return {
+            notebooks: updated,
+            logs: [...state.logs, aviso],
           };
         }),
 
@@ -426,26 +445,32 @@ export const useSemanticsStore = create<SemanticsStore>()(
           })
         ),
 
-      loadExample: (id) =>
+      loadTemplate: (id) =>
         set((state) => {
-          const ejemplo = buscarEjemplo(id);
-          if (!ejemplo) return {};
-          const { interpretacion: interp, entorno, formulas } = ejemplo;
+          const guardado = sincronizarActivo(state, {});
+          const listaActual = guardado.notebooks ?? state.notebooks;
+          const plantilla = listaActual.find((nb) => nb.id === id);
+          if (!plantilla) return {};
           const base = {
-            domain: interp.dominio,
-            functions: interp.funciones,
-            relations: interp.relaciones,
-            environment: entorno,
+            domain: [...plantilla.domain],
+            functions: JSON.parse(JSON.stringify(plantilla.functions)),
+            relations: JSON.parse(JSON.stringify(plantilla.relations)),
+            environment: { ...plantilla.environment },
           };
           return sincronizarActivo(state, {
             ...base,
-            formula: formulas[0],
-            evaluationHistory: formulas.map((f) => crearEvaluacion(f, base)),
-            logs: [`ejemplo cargado: ${ejemplo.titulo} (${ejemplo.fuente})`],
+            formula: plantilla.formula,
+            evaluationHistory: JSON.parse(JSON.stringify(plantilla.evaluationHistory)),
+            logs: [...state.logs, `plantilla cargada: ${plantilla.title}`],
             activeMode: null,
             editingName: null,
           });
         }),
+
+      loadExample: (id) => {
+        const s = useSemanticsStore.getState();
+        s.loadTemplate(id);
+      },
 
       importFromFile: (datos) =>
         set((state) => {

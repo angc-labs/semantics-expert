@@ -12,6 +12,7 @@ export default function NotebookSidebar() {
   const selectNotebook = useSemanticsStore((s) => s.selectNotebook);
   const renameNotebook = useSemanticsStore((s) => s.renameNotebook);
   const deleteNotebook = useSemanticsStore((s) => s.deleteNotebook);
+  const toggleNotebookTemplate = useSemanticsStore((s) => s.toggleNotebookTemplate);
 
   const [abierto, setAbierto] = useState(false);
   const [editandoId, setEditandoId] = useState<string | null>(null);
@@ -115,7 +116,18 @@ export default function NotebookSidebar() {
                       className="w-full rounded border border-neutral-400 bg-white px-1.5 py-0.5 text-xs font-medium text-neutral-900 outline-none"
                     />
                   ) : (
-                    <div className="truncate text-sm font-medium">{nb.title}</div>
+                    <div className="flex items-center gap-1.5 truncate">
+                      <span className="truncate text-sm font-medium">{nb.title}</span>
+                      {nb.isTemplate && (
+                        <span
+                          className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${
+                            activo ? "bg-amber-400/25 text-amber-300" : "bg-amber-100 text-amber-800"
+                          }`}
+                        >
+                          plantilla
+                        </span>
+                      )}
+                    </div>
                   )}
                   <div
                     className={`mt-0.5 truncate text-[11px] ${
@@ -127,7 +139,38 @@ export default function NotebookSidebar() {
                 </div>
 
                 {!enEdicion && (
-                  <div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                  <div className="flex shrink-0 items-center gap-0.5">
+                    {/* Boton bookmark para guardar / quitar como plantilla */}
+                    <button
+                      type="button"
+                      title={nb.isTemplate ? "quitar de plantillas" : "guardar como plantilla (ejemplo)"}
+                      aria-label={nb.isTemplate ? "quitar de plantillas" : "guardar como plantilla (ejemplo)"}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleNotebookTemplate(nb.id);
+                      }}
+                      className={`flex h-8 w-8 items-center justify-center rounded-xl transition-all cursor-pointer ${
+                        nb.isTemplate
+                          ? activo
+                            ? "text-amber-300 hover:bg-neutral-800"
+                            : "text-amber-500 hover:bg-neutral-200"
+                          : activo
+                          ? "text-neutral-400 opacity-0 group-hover:opacity-100 hover:bg-neutral-800 hover:text-white"
+                          : "text-neutral-500 opacity-0 group-hover:opacity-100 hover:bg-neutral-200 hover:text-neutral-900"
+                      }`}
+                    >
+                      {nb.isTemplate ? (
+                        <svg className="h-4.5 w-4.5" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M5 4a2 2 0 012-2h10a2 2 0 012 2v17l-7-4-7 4V4z" />
+                        </svg>
+                      ) : (
+                        <svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                        </svg>
+                      )}
+                    </button>
+
+                    {/* Boton para renombrar */}
                     <button
                       type="button"
                       title="renombrar"
@@ -136,14 +179,22 @@ export default function NotebookSidebar() {
                         e.stopPropagation();
                         iniciarEdicion(nb.id, nb.title);
                       }}
-                      className={`flex h-6 w-6 items-center justify-center rounded-full text-xs transition-colors cursor-pointer ${
+                      className={`flex h-8 w-8 items-center justify-center rounded-xl opacity-0 transition-all group-hover:opacity-100 cursor-pointer ${
                         activo
-                          ? "text-neutral-300 hover:bg-neutral-700 hover:text-white"
+                          ? "text-neutral-300 hover:bg-neutral-800 hover:text-white"
                           : "text-neutral-600 hover:bg-neutral-200 hover:text-neutral-900"
                       }`}
                     >
-                      ✎
+                      <svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125"
+                        />
+                      </svg>
                     </button>
+
+                    {/* Boton para eliminar */}
                     <button
                       type="button"
                       title="eliminar notebook"
@@ -152,13 +203,15 @@ export default function NotebookSidebar() {
                         e.stopPropagation();
                         deleteNotebook(nb.id);
                       }}
-                      className={`flex h-6 w-6 items-center justify-center rounded-full text-xs transition-colors cursor-pointer ${
+                      className={`flex h-8 w-8 items-center justify-center rounded-xl opacity-0 transition-all group-hover:opacity-100 cursor-pointer ${
                         activo
                           ? "text-neutral-300 hover:bg-rose-600 hover:text-white"
                           : "text-neutral-600 hover:bg-rose-100 hover:text-rose-700"
                       }`}
                     >
-                      ×
+                      <svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
                     </button>
                   </div>
                 )}

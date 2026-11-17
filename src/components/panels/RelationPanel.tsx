@@ -49,7 +49,7 @@ export default function RelationPanel() {
   }, [relArity, domain]);
 
   const candidateTuples = useMemo(
-    () => productoCartesiano(domain, relArity),
+    () => (relArity <= 6 ? productoCartesiano(domain, relArity) : []),
     [domain, relArity]
   );
 
@@ -254,33 +254,35 @@ export default function RelationPanel() {
               type="number"
               aria-label="aridad de la relación"
               min={1}
-              max={6}
+              max={30}
               value={relArity}
               onChange={(e) => {
-                const val = Math.max(1, Math.min(6, Number(e.target.value) || 1));
+                const val = Math.max(1, Math.min(30, Number(e.target.value) || 1));
                 setRelArity(val);
                 setRelSelectedTuples(new Set());
                 setRelTupleError(null);
                 setRelPendingOutDomain(null);
               }}
-              title="aridad personalizada (1 a 6)"
+              title="aridad de la relación"
               className="w-14 border border-neutral-400 rounded-xl px-2 py-1 text-xs outline-none focus:border-neutral-900"
             />
           </div>
         </div>
 
         <div className="ml-auto flex gap-1.5 text-xs">
-          <button
-            type="button"
-            onClick={() => {
-              const all = new Set(candidateTuples.map((t) => t.join(",")));
-              setRelSelectedTuples(all);
-              setRelTupleError(null);
-            }}
-            className="px-2 py-1 border border-neutral-400 rounded-xl hover:bg-neutral-100"
-          >
-            todas d^{relArity}
-          </button>
+          {relArity <= 6 && (
+            <button
+              type="button"
+              onClick={() => {
+                const all = new Set(candidateTuples.map((t) => t.join(",")));
+                setRelSelectedTuples(all);
+                setRelTupleError(null);
+              }}
+              className="px-2 py-1 border border-neutral-400 rounded-xl hover:bg-neutral-100"
+            >
+              todas d^{relArity}
+            </button>
+          )}
           <button
             type="button"
             onClick={() => {
@@ -433,7 +435,7 @@ export default function RelationPanel() {
         <span className="text-xs text-neutral-600 font-semibold ml-1">{"}"}</span>
       </div>
 
-      {candidateTuples.length > 0 && (
+      {relArity <= 6 && candidateTuples.length > 0 && (
         <div className="border border-neutral-400 rounded-xl p-2.5 bg-neutral-50 space-y-2 max-h-40 overflow-y-auto">
           <div className="text-xs text-neutral-700">
             o elige directo del conjunto d^{relArity}:
